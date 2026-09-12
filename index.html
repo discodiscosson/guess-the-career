@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -145,11 +145,6 @@
   </div>
 
   <div class="main">
-
-  <div class="auth-banner" id="authBanner">
-    <span id="authStatusText">Playing as guest — your progress won't be saved</span>
-    <button type="button" class="auth-btn" id="authButton">Sign in</button>
-  </div>
 
   <div class="scorebar">
     <div>Current streak: <strong id="streak">0</strong></div>
@@ -586,7 +581,7 @@ let current = null;
 let timer = null;
 let streak = 0;
 let locked = false;
-let isSignedIn = false; // mock auth state — no real backend yet, resets every page load
+let isSignedIn = false; // reserved for future real auth
 
 const rowsEl = document.getElementById('rows');
 const feedbackEl = document.getElementById('feedback');
@@ -602,9 +597,6 @@ const lbTeamSelect = document.getElementById('lbTeamSelect');
 const lbListEl = document.getElementById('lbList');
 const lbYouEl = document.getElementById('lbYou');
 const resetFilterBtn = document.getElementById('resetFilterBtn');
-const authBanner = document.getElementById('authBanner');
-const authStatusText = document.getElementById('authStatusText');
-const authButton = document.getElementById('authButton');
 
 function flatten() {
   allPlayers = [];
@@ -703,34 +695,6 @@ resetFilterBtn.addEventListener('click', () => {
   selectedLeagues.clear();
   renderLeagueBoxes();
   applyFilterChange();
-});
-
-// ---- MOCK AUTH -----------------------------------------------------------
-// No real backend yet: this only simulates what sign-in would unlock.
-// Guests can play freely, but their progress never persists across reloads.
-function updateAuthUI() {
-  if (isSignedIn) {
-    authStatusText.textContent = 'Signed in — your progress is being saved';
-    authButton.textContent = 'Sign out';
-    authBanner.classList.add('signed-in');
-  } else {
-    authStatusText.textContent = "Playing as guest — your progress won't be saved";
-    authButton.textContent = 'Sign in';
-    authBanner.classList.remove('signed-in');
-  }
-}
-
-authButton.addEventListener('click', async () => {
-  isSignedIn = !isSignedIn;
-  updateAuthUI();
-  if (isSignedIn) {
-    // Pretend we just logged into an account: pull back any previously saved progress.
-    await loadCompleted();
-  } else {
-    // Signing out drops back to a guest session; in-memory progress this session is kept
-    // for the current play-through, but nothing further will be saved from here on.
-  }
-  updateProgressUI();
 });
 
 // ---- MOCK LEADERBOARD ---------------------------------------------------
@@ -926,7 +890,6 @@ guessForm.addEventListener('submit', (e) => {
   populateLeagueSelect();
   populateTeamSelect();
   renderLeaderboard();
-  updateAuthUI();
   await loadCompleted();
   buildPool();
   startRound();
