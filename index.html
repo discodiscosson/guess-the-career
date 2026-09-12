@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the Career</title>
+<style>
+  :root {
+    --header-bg: #a7c3e0;
+    --border: #a2a9b1;
+    --link: #3366cc;
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #202122;
+    --correct: #1a7a3c;
+    --wrong: #b3261e;
+    --timer: #3366cc;
+    --track: #e1e4e8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    padding: 24px 16px;
+  }
+  .wrap { width: 100%; max-width: 1180px; }
+
+  .layout { display: flex; flex-direction: column; gap: 20px; }
+  .sidebar { display: flex; flex-direction: column; gap: 10px; }
+  .sidebar-title { font-size: 13px; font-weight: 600; color: #444; }
+  .league-boxes {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    max-height: 400px; overflow-y: auto; padding-right: 4px; margin-right: -4px;
+  }
+  .league-boxes::-webkit-scrollbar { width: 6px; }
+  .league-boxes::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  .league-boxes::-webkit-scrollbar-track { background: transparent; }
+  .league-box {
+    padding: 10px 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: #fff; font-size: 13px; line-height: 1.3; cursor: pointer; user-select: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .league-box:hover { border-color: var(--link); }
+  .league-box.active { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
+  .league-box.disabled { opacity: 0.45; cursor: default; position: relative; }
+  .league-box.disabled:hover { border-color: var(--border); }
+  .league-name { font-weight: 500; }
+  .league-progress {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: #888;
+  }
+  .league-box.active .league-progress { color: rgba(255,255,255,0.85); }
+  .reset-btn {
+    align-self: flex-start; background: none; border: 1px solid var(--border); color: #555;
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .reset-btn:hover { background: #eee; }
+  .main { flex: 1; min-width: 0; max-width: 460px; }
+
+  .leaderboard-panel { display: flex; flex-direction: column; gap: 10px; }
+  .lb-title { font-size: 15px; font-weight: 700; }
+  .lb-controls { display: flex; flex-direction: column; gap: 6px; }
+  .lb-select {
+    padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; background: #fff; color: var(--text);
+  }
+  .lb-select:disabled { color: #999; background: #f2f2f2; }
+  .lb-list { display: flex; flex-direction: column; gap: 4px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    border-radius: 6px; font-size: 13px; background: #fff; border: 1px solid #eee;
+  }
+  .lb-rank { width: 18px; text-align: center; font-weight: 700; color: #999; flex-shrink: 0; }
+  .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-score { font-weight: 600; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lb-row.lb-you { background: #eef3ff; border-color: var(--link); }
+  .lb-row.lb-you .lb-name, .lb-row.lb-you .lb-score { color: var(--link); font-weight: 700; }
+  .lb-divider { text-align: center; color: #aaa; font-size: 12px; margin: 2px 0; }
+
+  @media (min-width: 980px) {
+    .layout { flex-direction: row; align-items: flex-start; }
+    .sidebar { width: 340px; flex-shrink: 0; }
+    .leaderboard-panel { width: 280px; flex-shrink: 0; }
+  }
+
+  .progress-block { margin-bottom: 16px; }
+  .progress-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; color: #555; margin-bottom: 3px;
+  }
+  .progress-row strong { color: var(--text); font-size: 14px; }
+  .progress-track {
+    height: 8px; background: var(--track); border-radius: 4px; overflow: hidden; margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%; background: var(--correct); width: 0%; transition: width 0.4s ease;
+  }
+
+  .scorebar {
+    display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #666;
+  }
+
+  .auth-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: #fff8e6; border: 1px solid #f0dfa0; border-radius: 6px;
+    padding: 8px 12px; font-size: 13px; color: #7a6420; margin-bottom: 12px;
+  }
+  .auth-banner.signed-in { background: #eaf6ec; border-color: #b6e0c0; color: #1a5c2e; }
+  .auth-btn {
+    padding: 5px 12px; font-size: 12px; font-weight: 600; background: var(--link);
+    color: #fff; border: none; border-radius: 5px; cursor: pointer; white-space: nowrap;
+  }
+  .auth-banner.signed-in .auth-btn { background: #6b7280; }
+
+  .timer-track { height: 6px; background: var(--track); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+  .timer-fill { height: 100%; background: var(--timer); width: 100%; transition: width 0.1s linear, background-color 0.3s; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .card-header { background: var(--header-bg); text-align: center; font-weight: 700; font-size: 17px; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { padding: 8px 10px; text-align: left; }
+  thead th { font-weight: 700; border-bottom: 1px solid #ccc; font-size: 14px; }
+  th.apps, td.apps { text-align: right; }
+  th.apps u { text-decoration-style: dotted; }
+  tbody tr:not(:last-child) td { border-bottom: 1px solid #eee; }
+  td.team { color: var(--link); font-weight: 500; }
+
+  .feedback { min-height: 26px; text-align: center; font-weight: 600; margin-top: 12px; font-size: 15px; }
+  .feedback.correct { color: var(--correct); }
+  .feedback.wrong { color: var(--wrong); }
+
+  form { display: flex; gap: 8px; margin-top: 10px; }
+  input[type="text"] { flex: 1; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; outline: none; }
+  input[type="text"]:focus { border-color: var(--link); }
+  button { padding: 10px 18px; font-size: 15px; font-weight: 600; background: var(--link); color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; }
+  .done-banner { text-align: center; padding: 40px 20px; }
+  .done-banner h2 { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="layout">
+
+  <div class="sidebar">
+    <div class="sidebar-title">Let's focus on players from...</div>
+    <div class="league-boxes" id="leagueBoxes"></div>
+    <button type="button" class="reset-btn" id="resetFilterBtn">Reset (show all)</button>
+  </div>
+
+  <div class="main">
+
+  <div class="auth-banner" id="authBanner">
+    <span id="authStatusText">Playing as guest — your progress won't be saved</span>
+    <button type="button" class="auth-btn" id="authButton">Sign in</button>
+  </div>
+
+  <div class="scorebar">
+    <div>Current streak: <strong id="streak">0</strong></div>
+  </div>
+
+  <div id="gameArea">
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+    <div class="card">
+      <div class="card-header">Senior career*</div>
+      <table>
+        <thead><tr><th>Years</th><th>Team</th><th class="apps"><u>Apps (Gls)</u></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <form id="guessForm" autocomplete="off">
+      <input type="text" id="guessInput" placeholder="Who is this player?" />
+      <button type="submit">Guess</button>
+    </form>
+    <div class="hint">Guess before the bar runs out · press Enter to submit</div>
+  </div>
+
+  <div class="done-banner" id="doneBanner" style="display:none;">
+    <h2>All done! 🎉</h2>
+    <p>You've identified every player in the current selection.</p>
+  </div>
+
+  </div>
+
+  <div class="leaderboard-panel">
+    <div class="lb-title">Leaderboard</div>
+    <div class="lb-controls">
+      <select id="lbLeagueSelect" class="lb-select"></select>
+      <select id="lbTeamSelect" class="lb-select"></select>
+    </div>
+    <div class="lb-list" id="lbList"></div>
+    <div id="lbYou"></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ---- DATA -----------------------------------------------------------
+// Structure: one club object per club. Add more clubs here to expand the league.
+const LEAGUE_NAME = "Premier League";
+
+const CLUBS = [
+  {
+    id: "arsenal",
+    name: "Arsenal",
+    players: [
+      { id: "raya", names: ["david raya","raya"], display: "David Raya",
+        rows: [["2015–2019","Blackburn Rovers",146,0],["2019–2023","Brentford",129,0],["2023–","Arsenal",90,0]] },
+      { id: "kepa", names: ["kepa","kepa arrizabalaga"], display: "Kepa Arrizabalaga",
+        rows: [["2016–2018","Athletic Bilbao",53,0],["2018–2023","Chelsea",91,0],["2023–2024","Real Madrid (loan)",8,0],["2024–2025","Bournemouth (loan)",38,0],["2025–","Arsenal",8,0]] },
+      { id: "saliba", names: ["william saliba","saliba"], display: "William Saliba",
+        rows: [["2019–2020","Saint-Étienne (loan)",19,1],["2020–2021","Nice (loan)",20,1],["2021–2022","Marseille (loan)",38,3],["2022–","Arsenal",140,7]] },
+      { id: "timber", names: ["jurrien timber","timber","jurriën timber"], display: "Jurriën Timber",
+        rows: [["2019–2023","Ajax",91,3],["2023–","Arsenal",50,2]] },
+      { id: "white", names: ["ben white"], display: "Ben White",
+        rows: [["2014–2019","Brighton (loans: Newport, Peterborough)",58,4],["2020–2021","Leeds United (loan)",36,1],["2021–","Arsenal",150,5]] },
+      { id: "calafiori", names: ["riccardo calafiori","calafiori"], display: "Riccardo Calafiori",
+        rows: [["2019–2023","Roma",8,0],["2023–2024","Bologna",30,2],["2024–","Arsenal",30,2]] },
+      { id: "lewisskelly", names: ["myles lewis-skelly","lewis-skelly"], display: "Myles Lewis-Skelly",
+        rows: [["2024–","Arsenal",30,1]] },
+      { id: "mosquera", names: ["cristhian mosquera","mosquera"], display: "Cristhian Mosquera",
+        rows: [["2021–2025","Valencia",90,2],["2025–","Arsenal",10,0]] },
+      { id: "gabriel", names: ["gabriel","gabriel magalhaes","gabriel magalhães"], display: "Gabriel Magalhães",
+        rows: [["2018–2020","Lille",55,3],["2020–","Arsenal",180,20]] },
+      { id: "rice", names: ["declan rice","rice"], display: "Declan Rice",
+        rows: [["2017–2023","West Ham United",245,26],["2023–","Arsenal",90,12]] },
+      { id: "odegaard", names: ["martin odegaard","odegaard","martin ødegaard"], display: "Martin Ødegaard",
+        rows: [["2014–2015","Strømsgodset",23,3],["2017–2019","Vitesse (loan)",58,17],["2019–2020","Real Sociedad (loan)",34,7],["2021–","Arsenal",190,45]] },
+      { id: "zubimendi", names: ["martin zubimendi","zubimendi"], display: "Martin Zubimendi",
+        rows: [["2019–2025","Real Sociedad",200,15],["2025–","Arsenal",10,0]] },
+      { id: "norgaard", names: ["christian norgaard","norgaard","christian nørgaard"], display: "Christian Nørgaard",
+        rows: [["2021–2025","Brentford",150,10],["2025–","Arsenal",8,0]] },
+      { id: "merino", names: ["mikel merino","merino"], display: "Mikel Merino",
+        rows: [["2017–2018","Newcastle United",27,1],["2018–2024","Real Sociedad",200,20],["2024–","Arsenal",50,10]] },
+      { id: "gyokeres", names: ["viktor gyokeres","gyokeres","viktor gyökeres"], display: "Viktor Gyökeres",
+        rows: [["2021–2023","Coventry City",89,43],["2023–2025","Sporting CP",102,97],["2025–","Arsenal",40,21]] },
+      { id: "saka", names: ["bukayo saka","saka"], display: "Bukayo Saka",
+        rows: [["2019–","Arsenal",250,60]] },
+      { id: "martinelli", names: ["gabriel martinelli","martinelli"], display: "Gabriel Martinelli",
+        rows: [["2017–2019","Ituano",25,10],["2019–","Arsenal",220,40]] },
+      { id: "trossard", names: ["leandro trossard","trossard"], display: "Leandro Trossard",
+        rows: [["2013–2019","Genk",168,55],["2019–2023","Brighton",92,20],["2023–","Arsenal",100,25]] },
+      { id: "eze", names: ["eberechi eze","eze"], display: "Eberechi Eze",
+        rows: [["2016–2020","QPR",91,19],["2020–2025","Crystal Palace",180,40],["2025–","Arsenal",8,2]] },
+      { id: "madueke", names: ["noni madueke","madueke"], display: "Noni Madueke",
+        rows: [["2018–2023","PSV Eindhoven",78,23],["2023–2025","Chelsea",60,15],["2025–","Arsenal",10,2]] },
+      { id: "havertz", names: ["kai havertz","havertz"], display: "Kai Havertz",
+        rows: [["2016–2020","Bayer Leverkusen",141,35],["2020–2023","Chelsea",139,32],["2023–","Arsenal",70,18]] },
+      { id: "jesus", names: ["gabriel jesus","jesus"], display: "Gabriel Jesus",
+        rows: [["2013–2016","Palmeiras",55,22],["2017–2022","Manchester City",172,63],["2022–","Arsenal",100,20]] }
+    ]
+  },
+  {
+    id: "mancity",
+    name: "Manchester City",
+    players: [
+      { id: "donnarumma", names: ["gianluigi donnarumma","donnarumma"], display: "Gianluigi Donnarumma",
+        rows: [["2015–2021","AC Milan",251,0],["2021–2025","Paris Saint-Germain",186,0],["2025–","Manchester City",10,0]] },
+      { id: "trafford", names: ["james trafford","trafford"], display: "James Trafford",
+        rows: [["2021–2023","Bolton Wanderers (loan)",90,0],["2023–2024","Burnley",38,0],["2024–","Manchester City",20,0]] },
+      { id: "rubendias", names: ["ruben dias","dias","rúben dias"], display: "Rúben Dias",
+        rows: [["2017–2020","Benfica",89,3],["2020–","Manchester City",220,8]] },
+      { id: "gvardiol", names: ["josko gvardiol","gvardiol","joško gvardiol"], display: "Joško Gvardiol",
+        rows: [["2019–2021","Dinamo Zagreb",45,3],["2021–2023","RB Leipzig",87,7],["2023–","Manchester City",90,7]] },
+      { id: "stones", names: ["john stones","stones"], display: "John Stones",
+        rows: [["2011–2016","Everton",105,3],["2016–","Manchester City",200,10]] },
+      { id: "ake", names: ["nathan ake","ake","nathan aké"], display: "Nathan Aké",
+        rows: [["2017–2020","Bournemouth",111,10],["2020–","Manchester City",130,7]] },
+      { id: "khusanov", names: ["abdukodir khusanov","khusanov"], display: "Abdukodir Khusanov",
+        rows: [["2022–2024","RC Lens",45,2],["2025–","Manchester City",15,0]] },
+      { id: "matheusnunes", names: ["matheus nunes","nunes"], display: "Matheus Nunes",
+        rows: [["2019–2022","Sporting CP",91,10],["2022–2023","Wolves",33,3],["2023–","Manchester City",60,2]] },
+      { id: "aitnouri", names: ["rayan ait-nouri","ait nouri","aït-nouri"], display: "Rayan Aït-Nouri",
+        rows: [["2021–2025","Wolves",130,10],["2025–","Manchester City",8,0]] },
+      { id: "rodri", names: ["rodri","rodrigo hernandez"], display: "Rodri",
+        rows: [["2015–2018","Villarreal",88,4],["2018–2019","Atlético Madrid",39,1],["2019–2026","Manchester City",210,25]] },
+      { id: "bernardosilva", names: ["bernardo silva","bernardo"], display: "Bernardo Silva",
+        rows: [["2015–2017","Monaco",87,20],["2017–","Manchester City",350,60]] },
+      { id: "reijnders", names: ["tijjani reijnders","reijnders"], display: "Tijjani Reijnders",
+        rows: [["2020–2023","AZ Alkmaar",89,20],["2023–2025","AC Milan",82,17],["2025–","Manchester City",30,5]] },
+      { id: "kovacic", names: ["mateo kovacic","kovacic","kovačić"], display: "Mateo Kovačić",
+        rows: [["2013–2015","Inter Milan",63,4],["2015–2018","Real Madrid",76,3],["2018–2023","Chelsea",152,9],["2023–","Manchester City",60,4]] },
+      { id: "cherki", names: ["rayan cherki","cherki"], display: "Rayan Cherki",
+        rows: [["2019–2025","Lyon",130,20],["2025–","Manchester City",5,1]] },
+      { id: "foden", names: ["phil foden","foden"], display: "Phil Foden",
+        rows: [["2017–","Manchester City",300,80]] },
+      { id: "savinho", names: ["savinho","savio"], display: "Savinho",
+        rows: [["2023–2024","Girona (loan)",33,5],["2024–","Manchester City",50,8]] },
+      { id: "doku", names: ["jeremy doku","doku","jérémy doku"], display: "Jérémy Doku",
+        rows: [["2018–2021","Anderlecht",62,9],["2021–2023","Rennes",74,17],["2023–","Manchester City",90,12]] },
+      { id: "haalandcity", names: ["erling haaland","haaland"], display: "Erling Haaland",
+        rows: [["2016–2017","Bryne",16,4],["2017–2019","Molde",49,20],["2019–2020","Red Bull Salzburg",27,29],["2020–2022","Borussia Dortmund",89,86],["2022–","Manchester City",117,133]] },
+      { id: "marmoush", names: ["omar marmoush","marmoush"], display: "Omar Marmoush",
+        rows: [["2021–2023","VfL Wolfsburg",60,9],["2023–2025","Eintracht Frankfurt",60,25],["2025–","Manchester City",30,15]] },
+      { id: "nicogonzalezcity", names: ["nico gonzalez","nico gonzález"], display: "Nico González",
+        rows: [["2024–2025","Porto",43,3],["2025–","Manchester City",10,0]] },
+      { id: "guehi", names: ["marc guehi","guehi","marc guéhi"], display: "Marc Guéhi",
+        rows: [["2021–2025","Crystal Palace",160,8],["2025–","Manchester City",5,0]] },
+      { id: "semenyo", names: ["antoine semenyo","semenyo"], display: "Antoine Semenyo",
+        rows: [["2019–2022","Bristol City",62,9],["2022–2025","Bournemouth",130,30],["2025–","Manchester City",8,2]] }
+    ]
+  },
+  {
+    id: "spurs",
+    name: "Tottenham Hotspur",
+    players: [
+      { id: "vicario", names: ["guglielmo vicario","vicario"], display: "Guglielmo Vicario",
+        rows: [["2019–2023","Empoli",118,0],["2023–","Tottenham Hotspur",90,0]] },
+      { id: "kinsky", names: ["antonin kinsky","kinsky","antonín kinský"], display: "Antonín Kinský",
+        rows: [["2021–2024","Slavia Prague",60,0],["2024–","Tottenham Hotspur",10,0]] },
+      { id: "porro", names: ["pedro porro","porro"], display: "Pedro Porro",
+        rows: [["2021–2023","Sporting CP",70,10],["2023–","Tottenham Hotspur",100,12]] },
+      { id: "romero", names: ["cristian romero","romero"], display: "Cristian Romero",
+        rows: [["2018–2020","Genoa",34,1],["2020–2021","Juventus (loan)",26,1],["2021–2022","Atalanta",36,3],["2022–","Tottenham Hotspur",120,8]] },
+      { id: "vandeven", names: ["micky van de ven","van de ven"], display: "Micky van de Ven",
+        rows: [["2020–2023","VfL Wolfsburg",60,3],["2023–","Tottenham Hotspur",90,3]] },
+      { id: "dragusin", names: ["radu dragusin","dragusin","radu drăgușin"], display: "Radu Drăgușin",
+        rows: [["2021–2023","Genoa",60,4],["2024–","Tottenham Hotspur",40,2]] },
+      { id: "danso", names: ["kevin danso","danso"], display: "Kevin Danso",
+        rows: [["2016–2020","Augsburg",90,3],["2020–2025","RC Lens",150,10],["2025–","Tottenham Hotspur",8,0]] },
+      { id: "udogie", names: ["destiny udogie","udogie"], display: "Destiny Udogie",
+        rows: [["2020–2022","Udinese",60,4],["2022–","Tottenham Hotspur",100,6]] },
+      { id: "spence", names: ["djed spence","spence"], display: "Djed Spence",
+        rows: [["2020–2022","Nottingham Forest (loan)",45,4],["2022–","Tottenham Hotspur",60,2]] },
+      { id: "archiegray", names: ["archie gray","gray"], display: "Archie Gray",
+        rows: [["2021–2024","Leeds United",90,10],["2024–","Tottenham Hotspur",40,3]] },
+      { id: "bissouma", names: ["yves bissouma","bissouma"], display: "Yves Bissouma",
+        rows: [["2018–2022","Brighton",91,5],["2022–","Tottenham Hotspur",100,3]] },
+      { id: "bentancur", names: ["rodrigo bentancur","bentancur"], display: "Rodrigo Bentancur",
+        rows: [["2013–2017","Boca Juniors",45,3],["2017–2022","Juventus",130,7],["2022–","Tottenham Hotspur",90,5]] },
+      { id: "palhinha", names: ["joao palhinha","palhinha","joão palhinha"], display: "João Palhinha",
+        rows: [["2019–2022","Sporting CP",91,8],["2022–2024","Fulham",76,6],["2024–","Tottenham Hotspur",30,1]] },
+      { id: "bergvall", names: ["lucas bergvall","bergvall"], display: "Lucas Bergvall",
+        rows: [["2021–2024","Djurgården",60,6],["2024–","Tottenham Hotspur",40,4]] },
+      { id: "papesarr", names: ["pape sarr","sarr"], display: "Pape Sarr",
+        rows: [["2021–2023","Metz",70,10],["2023–","Tottenham Hotspur",60,4]] },
+      { id: "xavisimons", names: ["xavi simons","simons"], display: "Xavi Simons",
+        rows: [["2019–2023","PSV Eindhoven (loan)",92,32],["2023–2025","RB Leipzig",80,20],["2025–","Tottenham Hotspur",10,3]] },
+      { id: "kulusevski", names: ["dejan kulusevski","kulusevski"], display: "Dejan Kulusevski",
+        rows: [["2019–2020","Parma (loan)",36,10],["2020–2022","Juventus",62,13],["2022–","Tottenham Hotspur",130,25]] },
+      { id: "kudus", names: ["mohammed kudus","kudus"], display: "Mohammed Kudus",
+        rows: [["2019–2020","FC Nordsjælland",30,10],["2020–2023","Ajax",92,40],["2023–2025","West Ham United",80,20],["2025–","Tottenham Hotspur",15,3]] },
+      { id: "brennanjohnson", names: ["brennan johnson","johnson"], display: "Brennan Johnson",
+        rows: [["2018–2021","Nottingham Forest",70,15],["2021–","Tottenham Hotspur",100,25]] },
+      { id: "richarlison", names: ["richarlison"], display: "Richarlison",
+        rows: [["2017–2018","Watford",37,5],["2018–2022","Everton",130,30],["2022–","Tottenham Hotspur",90,20]] },
+      { id: "solanke", names: ["dominic solanke","solanke"], display: "Dominic Solanke",
+        rows: [["2017–2019","Liverpool",15,0],["2019–2023","Bournemouth",130,50],["2023–","Tottenham Hotspur",60,20]] },
+      { id: "kolomuani", names: ["randal kolo muani","kolo muani"], display: "Randal Kolo Muani",
+        rows: [["2020–2022","Nantes",62,15],["2022–2023","Eintracht Frankfurt",46,23],["2023–2025","Paris Saint-Germain",60,15],["2025–","Tottenham Hotspur",8,1]] }
+    ]
+  },
+  {
+    id: "chelsea",
+    name: "Chelsea",
+    players: [
+      { id: "robertsanchez", names: ["robert sanchez","sanchez","robert sánchez"], display: "Robert Sánchez",
+        rows: [["2019–2023","Brighton",130,0],["2023–","Chelsea",90,0]] },
+      { id: "jorgensen", names: ["filip jorgensen","jorgensen","filip jørgensen"], display: "Filip Jørgensen",
+        rows: [["2019–2024","FC Nordsjælland",90,0],["2024–","Chelsea",30,0]] },
+      { id: "cucurella", names: ["marc cucurella","cucurella"], display: "Marc Cucurella",
+        rows: [["2019–2021","Getafe",68,3],["2021–2022","Brighton",36,3],["2022–","Chelsea",100,3]] },
+      { id: "colwill", names: ["levi colwill","colwill"], display: "Levi Colwill",
+        rows: [["2022–2023","Brighton (loan)",23,0],["2023–","Chelsea",90,3]] },
+      { id: "reecejames", names: ["reece james","james"], display: "Reece James",
+        rows: [["2018–2019","Wigan Athletic (loan)",41,3],["2019–","Chelsea",180,10]] },
+      { id: "gusto", names: ["malo gusto","gusto"], display: "Malo Gusto",
+        rows: [["2019–2023","Lyon",60,2],["2023–","Chelsea",60,2]] },
+      { id: "chalobah", names: ["trevoh chalobah","chalobah"], display: "Trevoh Chalobah",
+        rows: [["2020–2021","Lorient (loan)",36,3],["2020–","Chelsea",90,5]] },
+      { id: "hato", names: ["jorrel hato","hato"], display: "Jorrel Hato",
+        rows: [["2021–2025","Ajax",90,3],["2025–","Chelsea",8,0]] },
+      { id: "enzofernandez", names: ["enzo fernandez","enzo","fernandez"], display: "Enzo Fernández",
+        rows: [["2021–2022","Defensa y Justicia",25,2],["2022–2023","Benfica",26,5],["2023–","Chelsea",100,15]] },
+      { id: "caicedo", names: ["moises caicedo","caicedo","moisés caicedo"], display: "Moisés Caicedo",
+        rows: [["2018–2020","Independiente del Valle",30,2],["2020–2023","Brighton",60,3],["2023–","Chelsea",90,3]] },
+      { id: "lavia", names: ["romeo lavia","lavia"], display: "Romeo Lavia",
+        rows: [["2022–2023","Southampton",32,1],["2023–","Chelsea",40,1]] },
+      { id: "andreysantos", names: ["andrey santos","santos"], display: "Andrey Santos",
+        rows: [["2021–2023","Vasco da Gama",40,3],["2023–","Chelsea",30,2]] },
+      { id: "essugo", names: ["dario essugo","essugo","dário essugo"], display: "Dário Essugo",
+        rows: [["2021–2023","Sporting CP",40,1],["2023–","Chelsea",15,0]] },
+      { id: "palmer", names: ["cole palmer","palmer"], display: "Cole Palmer",
+        rows: [["2023–","Chelsea",90,40]] },
+      { id: "pedroneto", names: ["pedro neto","neto"], display: "Pedro Neto",
+        rows: [["2017–2019","Valencia",70,20],["2019–2021","Valencia",70,20],["2021–2024","Wolves",92,40],["2024–","Chelsea",40,10]] },
+      { id: "joaopedro", names: ["joao pedro","joão pedro"], display: "João Pedro",
+        rows: [["2020–2023","Watford",130,50],["2023–2025","Brighton",60,25],["2025–","Chelsea",20,15]] },
+      { id: "delap", names: ["liam delap","delap"], display: "Liam Delap",
+        rows: [["2022–2025","Ipswich Town",60,20],["2025–","Chelsea",30,10]] },
+      { id: "estevao", names: ["estevao","estêvão"], display: "Estêvão",
+        rows: [["2022–2025","Palmeiras",90,20],["2025–","Chelsea",15,3]] },
+      { id: "nkunku", names: ["christopher nkunku","nkunku"], display: "Christopher Nkunku",
+        rows: [["2019–2023","RB Leipzig",121,58],["2023–","Chelsea",60,15]] },
+      { id: "guiu", names: ["marc guiu","guiu"], display: "Marc Guiu",
+        rows: [["2023–2024","Barcelona",5,2],["2024–","Chelsea",20,5]] }
+    ]
+  },
+  {
+    id: "liverpool",
+    name: "Liverpool",
+    players: [
+      { id: "alisson", names: ["alisson","alisson becker"], display: "Alisson Becker",
+        rows: [["2013–2016","Internacional",42,0],["2016–2018","Roma",61,0],["2018–","Liverpool",280,0]] },
+      { id: "mamardashvili", names: ["giorgi mamardashvili","mamardashvili"], display: "Giorgi Mamardashvili",
+        rows: [["2021–2025","Valencia",130,0],["2025–","Liverpool",10,0]] },
+      { id: "joegomez", names: ["joe gomez","gomez"], display: "Joe Gomez",
+        rows: [["2013–2015","Charlton Athletic",35,1],["2015–","Liverpool",220,3]] },
+      { id: "vandijk", names: ["virgil van dijk","van dijk"], display: "Virgil van Dijk",
+        rows: [["2011–2013","Groningen",65,7],["2013–2015","Celtic",68,10],["2015–2018","Southampton",84,12],["2018–","Liverpool",280,30]] },
+      { id: "konate", names: ["ibrahima konate","konate","ibrahima konaté"], display: "Ibrahima Konaté",
+        rows: [["2016–2021","RB Leipzig",88,3],["2021–","Liverpool",130,7]] },
+      { id: "kerkez", names: ["milos kerkez","kerkez","milos kerkez"], display: "Milos Kerkez",
+        rows: [["2022–2023","AZ Alkmaar",33,2],["2023–2025","Bournemouth",68,4],["2025–","Liverpool",15,1]] },
+      { id: "bradley", names: ["conor bradley","bradley"], display: "Conor Bradley",
+        rows: [["2022–2023","Bolton Wanderers (loan)",44,1],["2022–","Liverpool",90,3]] },
+      { id: "robertson", names: ["andy robertson","robertson"], display: "Andy Robertson",
+        rows: [["2014–2017","Hull City",62,1],["2017–","Liverpool",300,15]] },
+      { id: "frimpong", names: ["jeremie frimpong","frimpong","jérémie frimpong"], display: "Jérémie Frimpong",
+        rows: [["2021–2025","Bayer Leverkusen",130,20],["2025–","Liverpool",30,3]] },
+      { id: "wirtz", names: ["florian wirtz","wirtz"], display: "Florian Wirtz",
+        rows: [["2020–2025","Bayer Leverkusen",170,57],["2025–","Liverpool",40,10]] },
+      { id: "szoboszlai", names: ["dominik szoboszlai","szoboszlai"], display: "Dominik Szoboszlai",
+        rows: [["2017–2021","Red Bull Salzburg",87,29],["2021–2023","RB Leipzig",88,24],["2023–","Liverpool",100,15]] },
+      { id: "macallister", names: ["alexis mac allister","mac allister"], display: "Alexis Mac Allister",
+        rows: [["2019–2023","Brighton",100,19],["2023–","Liverpool",90,10]] },
+      { id: "curtisjones", names: ["curtis jones","jones"], display: "Curtis Jones",
+        rows: [["2016–","Liverpool",200,15]] },
+      { id: "gravenberch", names: ["ryan gravenberch","gravenberch"], display: "Ryan Gravenberch",
+        rows: [["2018–2022","Ajax",91,17],["2022–2023","Bayern Munich",33,1],["2023–","Liverpool",90,7]] },
+      { id: "isak", names: ["alexander isak","isak"], display: "Alexander Isak",
+        rows: [["2017–2019","Willem II (loan)",60,20],["2019–2022","Real Sociedad",111,44],["2022–2025","Newcastle United",105,62],["2025–","Liverpool",15,10]] },
+      { id: "salahliverpool", names: ["mohamed salah","salah","mo salah"], display: "Mohamed Salah",
+        rows: [["2012–2014","Basel",47,11],["2014–2016","Chelsea",19,2],["2015–2016","Roma (loan)",34,15],["2016–2017","Roma",31,15],["2017–","Liverpool",394,244]] },
+      { id: "chiesa", names: ["federico chiesa","chiesa"], display: "Federico Chiesa",
+        rows: [["2016–2020","Fiorentina",133,26],["2020–2024","Juventus",152,25],["2024–","Liverpool",30,3]] },
+      { id: "gakpo", names: ["cody gakpo","gakpo"], display: "Cody Gakpo",
+        rows: [["2018–2022","PSV Eindhoven",128,47],["2022–","Liverpool",130,35]] },
+      { id: "ekitike", names: ["hugo ekitike","ekitike","hugo ekitiké"], display: "Hugo Ekitiké",
+        rows: [["2019–2022","Reims",55,12],["2022–2024","Paris Saint-Germain",40,10],["2024–2025","Eintracht Frankfurt",48,22],["2025–","Liverpool",15,8]] },
+      { id: "endo", names: ["wataru endo","endo"], display: "Wataru Endo",
+        rows: [["2015–2019","Urawa Red Diamonds",130,15],["2019–2023","VfB Stuttgart",130,20],["2023–","Liverpool",60,2]] },
+      { id: "leoni", names: ["giovanni leoni","leoni"], display: "Giovanni Leoni",
+        rows: [["2022–2025","Parma",40,2],["2025–","Liverpool",5,0]] }
+    ]
+  },
+  {
+    id: "barcelona",
+    name: "Barcelona",
+    leagueId: "laliga",
+    players: [
+      { id: "joangarcia", names: ["joan garcia","joan garcía"], display: "Joan García",
+        rows: [["2022–2025","Espanyol",90,0],["2025–","Barcelona",30,0]] },
+      { id: "terstegen", names: ["marc-andre ter stegen","ter stegen","marc-andré ter stegen"], display: "Marc-André ter Stegen",
+        rows: [["2008–2014","Borussia Mönchengladbach",107,0],["2014–","Barcelona",370,0]] },
+      { id: "szczesny", names: ["wojciech szczesny","szczesny","wojciech szczęsny"], display: "Wojciech Szczęsny",
+        rows: [["2012–2017","Arsenal",181,0],["2017–2024","Juventus",249,0],["2024–","Barcelona",20,0]] },
+      { id: "kounde", names: ["jules kounde","kounde","jules koundé"], display: "Jules Koundé",
+        rows: [["2017–2019","Bordeaux",47,1],["2019–2022","Sevilla",118,5],["2022–","Barcelona",130,6]] },
+      { id: "ericgarcia", names: ["eric garcia","eric garcía"], display: "Eric García",
+        rows: [["2017–2020","Manchester City",4,0],["2020–","Barcelona",150,3]] },
+      { id: "araujobarca", names: ["ronald araujo","araujo","ronald araújo"], display: "Ronald Araújo",
+        rows: [["2020–","Barcelona",210,12]] },
+      { id: "cubarsi", names: ["pau cubarsi","cubarsi","pau cubarsí"], display: "Pau Cubarsí",
+        rows: [["2024–","Barcelona",70,2]] },
+      { id: "christensenbarca", names: ["andreas christensen","christensen"], display: "Andreas Christensen",
+        rows: [["2012–2017","Borussia Mönchengladbach (loan)",65,3],["2017–2022","Chelsea",96,3],["2022–","Barcelona",90,3]] },
+      { id: "balde", names: ["alejandro balde","balde"], display: "Alejandro Balde",
+        rows: [["2021–","Barcelona",140,5]] },
+      { id: "gerardmartin", names: ["gerard martin","gerard martín"], display: "Gerard Martín",
+        rows: [["2023–2024","Cornellà (loan)",30,2],["2024–","Barcelona",40,1]] },
+      { id: "casado", names: ["marc casado","marc casadó"], display: "Marc Casadó",
+        rows: [["2024–","Barcelona",50,1]] },
+      { id: "gavi", names: ["gavi"], display: "Gavi",
+        rows: [["2021–","Barcelona",130,10]] },
+      { id: "bernal", names: ["marc bernal"], display: "Marc Bernal",
+        rows: [["2024–","Barcelona",15,0]] },
+      { id: "pedri", names: ["pedri"], display: "Pedri",
+        rows: [["2019–2020","Las Palmas",37,4],["2020–","Barcelona",220,25]] },
+      { id: "dejong", names: ["frenkie de jong","de jong"], display: "Frenkie de Jong",
+        rows: [["2015–2019","Ajax",116,15],["2019–","Barcelona",260,20]] },
+      { id: "lamineyamal", names: ["lamine yamal","yamal"], display: "Lamine Yamal",
+        rows: [["2023–","Barcelona",100,25]] },
+      { id: "bardghji", names: ["roony bardghji","bardghji"], display: "Roony Bardghji",
+        rows: [["2021–2025","Copenhagen",70,15],["2025–","Barcelona",10,2]] },
+      { id: "olmo", names: ["dani olmo","olmo"], display: "Dani Olmo",
+        rows: [["2017–2020","Dinamo Zagreb",85,26],["2020–2024","RB Leipzig",138,38],["2024–","Barcelona",50,10]] },
+      { id: "fermin", names: ["fermin lopez","fermin","fermín lópez"], display: "Fermín López",
+        rows: [["2023–","Barcelona",90,20]] },
+      { id: "raphinha", names: ["raphinha"], display: "Raphinha",
+        rows: [["2019–2020","Vitória Guimarães",30,7],["2020–2022","Leeds United",73,17],["2022–","Barcelona",150,50]] },
+      { id: "rashford", names: ["marcus rashford","rashford"], display: "Marcus Rashford",
+        rows: [["2016–2025","Manchester United",426,138],["2025–","Barcelona (loan)",20,10]] },
+      { id: "lewandowski", names: ["robert lewandowski","lewandowski","lewy"], display: "Robert Lewandowski",
+        rows: [["2006–2008","Znicz Pruszków",58,36],["2008–2010","Lech Poznań",58,32],["2010–2014","Borussia Dortmund",131,103],["2014–2022","Bayern Munich",375,344],["2022–","Barcelona",134,99]] }
+    ]
+  },
+  {
+    id: "bayern",
+    name: "Bayern Munich",
+    leagueId: "bundesliga",
+    players: [
+      { id: "neuer", names: ["manuel neuer","neuer"], display: "Manuel Neuer",
+        rows: [["2005–2011","Schalke 04",166,0],["2011–","Bayern Munich",395,0]] },
+      { id: "ulreich", names: ["sven ulreich","ulreich"], display: "Sven Ulreich",
+        rows: [["2010–2015","VfB Stuttgart",130,0],["2015–","Bayern Munich",90,0]] },
+      { id: "urbig", names: ["jonas urbig","urbig"], display: "Jonas Urbig",
+        rows: [["2022–2024","1. FC Köln",40,0],["2024–","Bayern Munich",20,0]] },
+      { id: "upamecano", names: ["dayot upamecano","upamecano"], display: "Dayot Upamecano",
+        rows: [["2017–2019","RB Salzburg",43,3],["2019–2021","RB Leipzig",89,7],["2021–","Bayern Munich",140,7]] },
+      { id: "kimminjae", names: ["kim min-jae","min-jae kim","kim min jae"], display: "Kim Min-jae",
+        rows: [["2017–2019","Jeonbuk Hyundai Motors",60,4],["2021–2022","Fenerbahçe",33,2],["2022–2023","Napoli",33,3],["2023–","Bayern Munich",60,4]] },
+      { id: "tah", names: ["jonathan tah","tah"], display: "Jonathan Tah",
+        rows: [["2013–2015","Hamburger SV",34,1],["2015–2025","Bayer Leverkusen",280,20],["2025–","Bayern Munich",40,3]] },
+      { id: "ito", names: ["hiroki ito","ito"], display: "Hiroki Ito",
+        rows: [["2019–2023","VfB Stuttgart",91,9],["2023–","Bayern Munich",40,1]] },
+      { id: "guerreiro", names: ["raphael guerreiro","guerreiro","raphaël guerreiro"], display: "Raphaël Guerreiro",
+        rows: [["2012–2016","Lorient",92,15],["2016–2023","Borussia Dortmund",236,28],["2023–","Bayern Munich",60,4]] },
+      { id: "stanisic", names: ["josip stanisic","stanisic","josip stanišić"], display: "Josip Stanišić",
+        rows: [["2020–2023","Bayern Munich",40,1],["2023–2024","Bayer Leverkusen (loan)",32,1],["2024–","Bayern Munich",30,1]] },
+      { id: "boey", names: ["sacha boey","boey"], display: "Sacha Boey",
+        rows: [["2019–2023","Rennes",60,2],["2023–2024","Galatasaray",34,4],["2024–","Bayern Munich",40,1]] },
+      { id: "kimmich", names: ["joshua kimmich","kimmich"], display: "Joshua Kimmich",
+        rows: [["2013–2015","RB Leipzig",60,4],["2015–","Bayern Munich",420,40]] },
+      { id: "goretzka", names: ["leon goretzka","goretzka"], display: "Leon Goretzka",
+        rows: [["2013–2018","Schalke 04",137,25],["2018–","Bayern Munich",250,45]] },
+      { id: "pavlovic", names: ["aleksandar pavlovic","pavlovic","aleksandar pavlović"], display: "Aleksandar Pavlović",
+        rows: [["2023–","Bayern Munich",70,3]] },
+      { id: "bischof", names: ["tom bischof","bischof"], display: "Tom Bischof",
+        rows: [["2022–2023","Hoffenheim",20,1],["2023–","Bayern Munich",40,3]] },
+      { id: "laimer", names: ["konrad laimer","laimer"], display: "Konrad Laimer",
+        rows: [["2014–2017","RB Salzburg",66,4],["2017–2021","RB Leipzig",118,10],["2021–","Bayern Munich",110,5]] },
+      { id: "musiala", names: ["jamal musiala","musiala"], display: "Jamal Musiala",
+        rows: [["2019–","Bayern Munich",220,60]] },
+      { id: "olise", names: ["michael olise","olise"], display: "Michael Olise",
+        rows: [["2021–2024","Crystal Palace",91,17],["2024–","Bayern Munich",60,25]] },
+      { id: "karl", names: ["lennart karl","karl"], display: "Lennart Karl",
+        rows: [["2024–","Bayern Munich",15,5]] },
+      { id: "gnabry", names: ["serge gnabry","gnabry"], display: "Serge Gnabry",
+        rows: [["2016–2017","Werder Bremen",32,11],["2017–2019","Hoffenheim (loan)",47,17],["2019–","Bayern Munich",240,90]] },
+      { id: "luisdiaz", names: ["luis diaz","diaz","luis díaz"], display: "Luis Díaz",
+        rows: [["2016–2019","Junior FC",60,15],["2019–2022","Porto",82,32],["2022–2025","Liverpool",105,32],["2025–","Bayern Munich",40,15]] },
+      { id: "kanebayern", names: ["harry kane","kane"], display: "Harry Kane",
+        rows: [["2011–2023","Tottenham Hotspur",435,280],["2023–","Bayern Munich",130,120]] },
+      { id: "jacksonbayern", names: ["nicolas jackson","jackson"], display: "Nicolas Jackson",
+        rows: [["2022–2023","Villarreal",38,7],["2023–2025","Chelsea",90,25],["2025–","Bayern Munich",15,8]] }
+    ]
+  }
+  // Add more club objects here to expand the league further
+];
+
+// League groupings — used to power the left-hand filter boxes.
+// `active: true` means real player data exists for that league.
+// The rest are placeholders until their clubs/players get added to CLUBS.
+const LEAGUES = [
+  { id: "epl", name: "Premier League", active: true },
+  { id: "laliga", name: "La Liga", active: true },
+  { id: "seriea", name: "Serie A", active: false },
+  { id: "bundesliga", name: "Bundesliga", active: true },
+  { id: "ligue1", name: "Ligue 1", active: false },
+  { id: "eredivisie", name: "Eredivisie", active: false },
+  { id: "primeira", name: "Primeira Liga", active: false },
+  { id: "scottish", name: "Scottish Premiership", active: false },
+  { id: "belgian", name: "Belgian Pro League", active: false },
+  { id: "superlig", name: "Süper Lig", active: false },
+  { id: "brasileirao", name: "Brasileirão", active: false },
+  { id: "ligamx", name: "Liga MX", active: false },
+  { id: "mls", name: "MLS", active: false },
+  { id: "argentina", name: "Argentine Primera División", active: false },
+  { id: "saudi", name: "Saudi Pro League", active: false },
+  { id: "j1league", name: "J1 League", active: false },
+  { id: "kleague", name: "K League 1", active: false },
+  { id: "aleague", name: "A-League", active: false },
+  { id: "championship", name: "Championship", active: false },
+  { id: "rpl", name: "Russian Premier League", active: false }
+];
+CLUBS.forEach(c => { if (!c.leagueId) c.leagueId = "epl"; });
+
+// ---- STATE ------------------------------------------------------------
+let completed = new Set();
+let allPlayers = []; // flattened {clubId, clubName, leagueId, ...player}
+let selectedLeagues = new Set(); // empty = no filter, all leagues eligible
+let pool = [];
+let current = null;
+let timer = null;
+let streak = 0;
+let locked = false;
+let isSignedIn = false; // mock auth state — no real backend yet, resets every page load
+
+const rowsEl = document.getElementById('rows');
+const feedbackEl = document.getElementById('feedback');
+const streakEl = document.getElementById('streak');
+const timerFill = document.getElementById('timerFill');
+const guessForm = document.getElementById('guessForm');
+const guessInput = document.getElementById('guessInput');
+const gameArea = document.getElementById('gameArea');
+const doneBanner = document.getElementById('doneBanner');
+const leagueBoxesEl = document.getElementById('leagueBoxes');
+const lbLeagueSelect = document.getElementById('lbLeagueSelect');
+const lbTeamSelect = document.getElementById('lbTeamSelect');
+const lbListEl = document.getElementById('lbList');
+const lbYouEl = document.getElementById('lbYou');
+const resetFilterBtn = document.getElementById('resetFilterBtn');
+const authBanner = document.getElementById('authBanner');
+const authStatusText = document.getElementById('authStatusText');
+const authButton = document.getElementById('authButton');
+
+function flatten() {
+  allPlayers = [];
+  CLUBS.forEach(club => {
+    club.players.forEach(p => {
+      allPlayers.push({ ...p, clubId: club.id, clubName: club.name, leagueId: club.leagueId });
+    });
+  });
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function loadCompleted() {
+  if (!isSignedIn) { completed = new Set(); return; } // guests start fresh, nothing to load
+  try {
+    const res = await window.storage.get('guess-career-completed', false);
+    const arr = res ? JSON.parse(res.value) : [];
+    completed = new Set(arr);
+  } catch (e) {
+    completed = new Set();
+  }
+}
+
+async function saveCompleted() {
+  if (!isSignedIn) return; // guest progress is session-only, never persisted
+  try {
+    await window.storage.set('guess-career-completed', JSON.stringify([...completed]), false);
+  } catch (e) {}
+}
+
+function updateProgressUI() {
+  renderLeagueBoxes();
+}
+
+function renderPlayer(player) {
+  rowsEl.innerHTML = player.rows.map(r => `
+    <tr><td>${r[0]}</td><td class="team">${r[1]}</td><td class="apps">${r[2]} (${r[3]})</td></tr>
+  `).join('');
+}
+
+function eligiblePlayers() {
+  return allPlayers.filter(p =>
+    !completed.has(p.id) &&
+    (selectedLeagues.size === 0 || selectedLeagues.has(p.leagueId))
+  );
+}
+
+function buildPool() {
+  pool = shuffle(eligiblePlayers());
+}
+
+function applyFilterChange() {
+  clearInterval(timer);
+  buildPool();
+  startRound();
+}
+
+function renderLeagueBoxes() {
+  leagueBoxesEl.innerHTML = LEAGUES.map(l => {
+    let progressText;
+    if (l.active) {
+      const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
+      const done = leaguePlayers.filter(p => completed.has(p.id)).length;
+      progressText = `${done} / ${leaguePlayers.length}`;
+    } else {
+      progressText = '0 / 109'; // mock placeholder until this league's real data is added
+    }
+    return `
+    <div class="league-box${selectedLeagues.has(l.id) ? ' active' : ''}${l.active ? '' : ' disabled'}" data-league="${l.id}" data-active="${l.active}">
+      <span class="league-name">${l.name}</span>
+      <span class="league-progress">${progressText}</span>
+    </div>
+  `;
+  }).join('');
+}
+
+leagueBoxesEl.addEventListener('click', (e) => {
+  const box = e.target.closest('.league-box');
+  if (!box) return;
+  if (box.dataset.active !== 'true') return; // mock leagues aren't selectable yet
+  const id = box.dataset.league;
+  if (selectedLeagues.has(id)) selectedLeagues.delete(id);
+  else selectedLeagues.add(id);
+  renderLeagueBoxes();
+  applyFilterChange();
+});
+
+resetFilterBtn.addEventListener('click', () => {
+  selectedLeagues.clear();
+  renderLeagueBoxes();
+  applyFilterChange();
+});
+
+// ---- MOCK AUTH -----------------------------------------------------------
+// No real backend yet: this only simulates what sign-in would unlock.
+// Guests can play freely, but their progress never persists across reloads.
+function updateAuthUI() {
+  if (isSignedIn) {
+    authStatusText.textContent = 'Signed in — your progress is being saved';
+    authButton.textContent = 'Sign out';
+    authBanner.classList.add('signed-in');
+  } else {
+    authStatusText.textContent = "Playing as guest — your progress won't be saved";
+    authButton.textContent = 'Sign in';
+    authBanner.classList.remove('signed-in');
+  }
+}
+
+authButton.addEventListener('click', async () => {
+  isSignedIn = !isSignedIn;
+  updateAuthUI();
+  if (isSignedIn) {
+    // Pretend we just logged into an account: pull back any previously saved progress.
+    await loadCompleted();
+  } else {
+    // Signing out drops back to a guest session; in-memory progress this session is kept
+    // for the current play-through, but nothing further will be saved from here on.
+  }
+  updateProgressUI();
+});
+
+// ---- MOCK LEADERBOARD ---------------------------------------------------
+// All numbers here are placeholders until real accounts/scores exist.
+const LB_WORLDWIDE_TOTAL = 93881;
+const LB_LEAGUE_TOTALS = {
+  epl: 4200, laliga: 3900, seriea: 3800, bundesliga: 3400, ligue1: 3200,
+  eredivisie: 1800, primeira: 1600, scottish: 1100, belgian: 1200, superlig: 1500,
+  brasileirao: 3000, ligamx: 1900, mls: 2100, argentina: 2400, saudi: 1100,
+  j1league: 1600, kleague: 1000, aleague: 700, championship: 3100, rpl: 1300
+};
+const LB_CLUB_TOTALS = {
+  arsenal: 1200, mancity: 1100, spurs: 950, chelsea: 1050, liverpool: 1150,
+  barcelona: 1300, bayern: 1250
+};
+const LB_MOCK_NAMES = [
+  "alex","jamie","sofia","liam","noah","emma","oliver","ava","lucas","mia",
+  "ethan","isla","mateo","zoe","leo","nora","kai","ruby","finn","luna",
+  "priya","hugo","mila","theo","ines","axel","freja","omar","sara","yusuf"
+];
+
+function seededRandom(seedStr) {
+  let h = 0;
+  for (let i = 0; i < seedStr.length; i++) { h = (Math.imul(31, h) + seedStr.charCodeAt(i)) | 0; }
+  return function () {
+    h = Math.imul(h ^ (h >>> 15), 1 | h);
+    h ^= h + Math.imul(h ^ (h >>> 7), 61 | h);
+    return ((h ^ (h >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function lbTotalForScope(leagueId, teamId) {
+  if (leagueId === 'worldwide') return LB_WORLDWIDE_TOTAL;
+  if (!teamId || teamId === 'all') return LB_LEAGUE_TOTALS[leagueId] || 1000;
+  return LB_CLUB_TOTALS[teamId] || 300;
+}
+
+function generateLeaderboard(leagueId, teamId) {
+  const scopeKey = `${leagueId}:${teamId || 'all'}`;
+  const total = lbTotalForScope(leagueId, teamId);
+  const rand = seededRandom(scopeKey);
+  const scaleFactor = Math.max(0.3, Math.min(1, total / 4000));
+
+  const entries = LB_MOCK_NAMES.map(name => {
+    const engagement = 150 + rand() * 2500;
+    return { name, score: Math.min(total, Math.round(engagement * scaleFactor)) };
+  });
+
+  const davidRaw = (leagueId === 'worldwide')
+    ? 353
+    : Math.max(5, Math.round(353 * (total / LB_WORLDWIDE_TOTAL)));
+  entries.push({ name: 'david', score: Math.min(total, davidRaw) });
+
+  entries.sort((a, b) => b.score - a.score);
+  const rank = entries.findIndex(e => e.name === 'david') + 1;
+  return { total, entries, rank };
+}
+
+function populateLeagueSelect() {
+  const options = ['<option value="worldwide">Worldwide</option>']
+    .concat(LEAGUES.map(l => `<option value="${l.id}">${l.name}</option>`));
+  lbLeagueSelect.innerHTML = options.join('');
+}
+
+function populateTeamSelect() {
+  const leagueId = lbLeagueSelect.value;
+  if (leagueId === 'worldwide') {
+    lbTeamSelect.innerHTML = '<option value="all">All teams</option>';
+    lbTeamSelect.disabled = true;
+    return;
+  }
+  const clubs = CLUBS.filter(c => c.leagueId === leagueId);
+  if (clubs.length === 0) {
+    lbTeamSelect.innerHTML = '<option value="all">All teams</option>';
+    lbTeamSelect.disabled = true;
+    return;
+  }
+  lbTeamSelect.disabled = false;
+  lbTeamSelect.innerHTML = '<option value="all">All teams</option>' +
+    clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderLeaderboard() {
+  const leagueId = lbLeagueSelect.value;
+  const teamId = lbTeamSelect.value;
+  const { total, entries, rank } = generateLeaderboard(leagueId, teamId);
+  const top = entries.slice(0, 8);
+
+  lbListEl.innerHTML = top.map((e, i) => `
+    <div class="lb-row${e.name === 'david' ? ' lb-you' : ''}">
+      <span class="lb-rank">${i + 1}</span>
+      <span class="lb-name">${e.name}${e.name === 'david' ? ' (you)' : ''}</span>
+      <span class="lb-score">${e.score} / ${total}</span>
+    </div>
+  `).join('');
+
+  const davidInTop = top.some(e => e.name === 'david');
+  if (!davidInTop) {
+    const davidEntry = entries.find(e => e.name === 'david');
+    lbYouEl.innerHTML = `
+      <div class="lb-divider">···</div>
+      <div class="lb-row lb-you">
+        <span class="lb-rank">${rank}</span>
+        <span class="lb-name">david (you)</span>
+        <span class="lb-score">${davidEntry.score} / ${total}</span>
+      </div>
+    `;
+  } else {
+    lbYouEl.innerHTML = '';
+  }
+}
+
+lbLeagueSelect.addEventListener('change', () => {
+  populateTeamSelect();
+  renderLeaderboard();
+});
+lbTeamSelect.addEventListener('change', renderLeaderboard);
+
+function startRound() {
+  if (pool.length === 0) buildPool();
+  if (pool.length === 0) {
+    gameArea.style.display = 'none';
+    doneBanner.style.display = 'block';
+    return;
+  }
+  gameArea.style.display = 'block';
+  doneBanner.style.display = 'none';
+
+  locked = false;
+  feedbackEl.textContent = '';
+  feedbackEl.className = 'feedback';
+  guessInput.value = '';
+  guessInput.disabled = false;
+  guessInput.focus();
+
+  current = pool.pop();
+  renderPlayer(current);
+  updateProgressUI();
+
+  timerFill.style.width = '100%';
+  timerFill.style.background = 'var(--timer)';
+  clearInterval(timer);
+  const start = Date.now();
+  timer = setInterval(() => {
+    const elapsed = (Date.now() - start) / 1000;
+    const pct = Math.max(0, 100 - (elapsed / 15) * 100);
+    timerFill.style.width = pct + '%';
+    if (pct < 30) timerFill.style.background = 'var(--wrong)';
+    if (elapsed >= 15) { clearInterval(timer); timeUp(); }
+  }, 60);
+}
+
+async function endRound(isCorrect) {
+  clearInterval(timer);
+  locked = true;
+  guessInput.disabled = true;
+  if (isCorrect) {
+    streak++;
+    streakEl.textContent = streak;
+    completed.add(current.id);
+    await saveCompleted();
+    feedbackEl.textContent = `Correct! It's ${current.display}`;
+    feedbackEl.className = 'feedback correct';
+    updateProgressUI();
+  } else {
+    streak = 0;
+    streakEl.textContent = streak;
+    feedbackEl.textContent = `Incorrect!`;
+    feedbackEl.className = 'feedback wrong';
+    // not completed — put it back into the pool for a later round
+    pool.unshift(current);
+  }
+  setTimeout(startRound, 1600);
+}
+
+function timeUp() { if (!locked) endRound(false); }
+
+function normalize(s) {
+  return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+guessForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (locked) return;
+  const guess = normalize(guessInput.value);
+  const isCorrect = guess !== '' && current.names.some(n => normalize(n) === guess);
+  endRound(isCorrect);
+});
+
+(async function init() {
+  flatten();
+  renderLeagueBoxes();
+  populateLeagueSelect();
+  populateTeamSelect();
+  renderLeaderboard();
+  updateAuthUI();
+  await loadCompleted();
+  buildPool();
+  startRound();
+})();
+</script>
+</body>
+</html>
