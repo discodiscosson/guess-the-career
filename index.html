@@ -113,11 +113,18 @@
     padding: 8px 12px; font-size: 13px; color: #444; margin-bottom: 12px;
   }
   .user-bar.signed-in { background: #eaf6ec; border-color: #b6e0c0; color: #1a5c2e; }
+  .user-bar-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .auth-btn {
     padding: 5px 12px; font-size: 12px; font-weight: 600; background: var(--link);
     color: #fff; border: none; border-radius: 5px; cursor: pointer; white-space: nowrap;
   }
   .user-bar.signed-in .auth-btn { background: #6b7280; }
+  .view-profile-btn {
+    padding: 5px 12px; font-size: 12px; font-weight: 600; background: #fff;
+    color: var(--link); border: 1px solid var(--link); border-radius: 5px; cursor: pointer; white-space: nowrap;
+    display: none;
+  }
+  .user-bar.signed-in .view-profile-btn { display: inline-block; }
 
   .timer-track { height: 6px; background: var(--track); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
   .timer-fill { height: 100%; background: var(--timer); width: 100%; transition: width 0.1s linear, background-color 0.3s; }
@@ -145,6 +152,62 @@
   .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; }
   .done-banner { text-align: center; padding: 40px 20px; }
   .done-banner h2 { margin-bottom: 8px; }
+
+  /* ---- PROFILE MODAL ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(32, 33, 34, 0.5);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 8px; width: 100%; max-width: 420px;
+    max-height: 88vh; overflow-y: auto; position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .modal-close {
+    position: absolute; top: 10px; right: 12px; background: none; border: none;
+    font-size: 22px; line-height: 1; color: #888; cursor: pointer; padding: 4px; width: auto;
+  }
+  .modal-close:hover { color: #333; }
+  .profile-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 24px 20px 16px; border-bottom: 1px solid var(--border);
+  }
+  .profile-avatar {
+    width: 48px; height: 48px; border-radius: 50%; background: var(--link); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .profile-name { font-size: 17px; font-weight: 700; }
+  .profile-email { font-size: 13px; color: #666; }
+  .profile-section { padding: 16px 20px; border-bottom: 1px solid #eee; }
+  .profile-section:last-of-type { border-bottom: none; }
+  .profile-section-title { font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; }
+  .profile-stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; font-size: 14px; border-bottom: 1px solid #f2f2f2;
+  }
+  .profile-stat-row:last-child { border-bottom: none; }
+  .profile-stat-row strong { font-variant-numeric: tabular-nums; }
+  .profile-league-list { margin-top: 4px; max-height: 160px; overflow-y: auto; }
+  .profile-league-row {
+    display: flex; justify-content: space-between; font-size: 13px; color: #555;
+    padding: 5px 0;
+  }
+  .profile-league-row strong { color: var(--text); font-variant-numeric: tabular-nums; }
+  .profile-setting-row { display: flex; flex-direction: column; gap: 8px; }
+  .profile-setting-row label { font-size: 13px; color: #555; font-weight: 600; }
+  .profile-setting-row .profile-input-row { display: flex; gap: 8px; }
+  .profile-setting-row input[type="text"] { flex: 1; padding: 8px 10px; font-size: 14px; }
+  .profile-setting-row button { padding: 8px 14px; font-size: 13px; }
+  .profile-save-msg { font-size: 12px; color: var(--correct); margin-top: 6px; min-height: 16px; }
+  .profile-footer { padding: 16px 20px 20px; }
+  .profile-signout-btn {
+    width: 100%; background: #fff; color: var(--wrong); border: 1px solid var(--wrong);
+    font-weight: 600; font-size: 14px; padding: 10px; border-radius: 5px; cursor: pointer;
+  }
+  .profile-signout-btn:hover { background: #fdf0ef; }
 </style>
 </head>
 <body>
@@ -161,7 +224,10 @@
 
   <div class="user-bar" id="userBar">
     <span id="userStatusText">Playing as guest — your progress won't be saved</span>
-    <button type="button" class="auth-btn" id="authBtn">Sign in with Google</button>
+    <div class="user-bar-actions">
+      <button type="button" class="view-profile-btn" id="viewProfileBtn">View profile</button>
+      <button type="button" class="auth-btn" id="authBtn">Sign in with Google</button>
+    </div>
   </div>
 
   <div class="scorebar">
@@ -206,6 +272,50 @@
   </div>
 
 </div>
+</div>
+
+<!-- ---- PROFILE MODAL ---- -->
+<div class="modal-overlay" id="profileModalOverlay">
+  <div class="modal" id="profileModal">
+    <button type="button" class="modal-close" id="profileModalClose">&times;</button>
+
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-email" id="profileEmail">—</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Statistics</div>
+      <div class="profile-stat-row">
+        <span>Total progress</span>
+        <strong id="profileTotalProgress">0 / 0</strong>
+      </div>
+      <div class="profile-stat-row">
+        <span>Leaderboard rank (worldwide)</span>
+        <strong id="profileRank">—</strong>
+      </div>
+      <div class="profile-league-list" id="profileLeagueList"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Settings</div>
+      <div class="profile-setting-row">
+        <label for="profileUsernameInput">Display name (shown on leaderboard)</label>
+        <div class="profile-input-row">
+          <input type="text" id="profileUsernameInput" placeholder="Your name" />
+          <button type="button" id="profileSaveNameBtn">Save</button>
+        </div>
+        <div class="profile-save-msg" id="profileSaveMsg"></div>
+      </div>
+    </div>
+
+    <div class="profile-footer">
+      <button type="button" class="profile-signout-btn" id="profileSignOutBtn">Sign out</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -605,6 +715,7 @@ let timer = null;
 let streak = 0;
 let locked = false;
 let currentUser = null; // Supabase user object, or null if signed out
+let currentUsername = null; // display name from the profiles table
 
 const rowsEl = document.getElementById('rows');
 const feedbackEl = document.getElementById('feedback');
@@ -623,6 +734,21 @@ const resetFilterBtn = document.getElementById('resetFilterBtn');
 const userBar = document.getElementById('userBar');
 const userStatusText = document.getElementById('userStatusText');
 const authBtn = document.getElementById('authBtn');
+const viewProfileBtn = document.getElementById('viewProfileBtn');
+
+// Profile modal elements
+const profileModalOverlay = document.getElementById('profileModalOverlay');
+const profileModalClose = document.getElementById('profileModalClose');
+const profileAvatar = document.getElementById('profileAvatar');
+const profileName = document.getElementById('profileName');
+const profileEmail = document.getElementById('profileEmail');
+const profileTotalProgress = document.getElementById('profileTotalProgress');
+const profileRank = document.getElementById('profileRank');
+const profileLeagueList = document.getElementById('profileLeagueList');
+const profileUsernameInput = document.getElementById('profileUsernameInput');
+const profileSaveNameBtn = document.getElementById('profileSaveNameBtn');
+const profileSaveMsg = document.getElementById('profileSaveMsg');
+const profileSignOutBtn = document.getElementById('profileSignOutBtn');
 
 function flatten() {
   allPlayers = [];
@@ -645,7 +771,7 @@ function shuffle(arr) {
 // ---- REAL AUTH + COMPLETED-TRACKING (Supabase) --------------------------
 function updateUserBarUI() {
   if (currentUser) {
-    const label = currentUser.user_metadata?.full_name || currentUser.email || 'Signed in';
+    const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Signed in';
     userStatusText.textContent = `Signed in as ${label} — your progress is saved`;
     authBtn.textContent = 'Sign out';
     userBar.classList.add('signed-in');
@@ -657,14 +783,29 @@ function updateUserBarUI() {
 }
 
 async function upsertProfile() {
-  if (!currentUser) return;
-  const username = currentUser.user_metadata?.full_name || currentUser.email || 'Player';
+  if (!currentUser) { currentUsername = null; return; }
+  const defaultName = currentUser.user_metadata?.full_name || currentUser.email || 'Player';
   try {
+    // Check if a profile already exists so we don't overwrite a custom display name
+    const { data: existing, error: fetchError } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+
+    if (existing && existing.username) {
+      currentUsername = existing.username;
+      return;
+    }
+
     await supabaseClient
       .from('profiles')
-      .upsert({ user_id: currentUser.id, username }, { onConflict: 'user_id' });
+      .upsert({ user_id: currentUser.id, username: defaultName }, { onConflict: 'user_id' });
+    currentUsername = defaultName;
   } catch (e) {
     console.error('Failed to save profile:', e);
+    currentUsername = defaultName;
   }
 }
 
@@ -708,8 +849,8 @@ async function markCompleted(playerId) {
 }
 
 async function refreshAfterAuthChange() {
-  updateUserBarUI();
   await upsertProfile();
+  updateUserBarUI();
   await loadCompleted();
   updateProgressUI();
   applyFilterChange();
@@ -905,6 +1046,81 @@ lbLeagueSelect.addEventListener('change', async () => {
 });
 lbTeamSelect.addEventListener('change', renderLeaderboard);
 
+// ---- PROFILE MODAL ---------------------------------------------------
+function openProfileModal() {
+  if (!currentUser) return;
+  profileModalOverlay.classList.add('open');
+  populateProfileModal();
+}
+
+function closeProfileModal() {
+  profileModalOverlay.classList.remove('open');
+  profileSaveMsg.textContent = '';
+}
+
+viewProfileBtn.addEventListener('click', openProfileModal);
+profileModalClose.addEventListener('click', closeProfileModal);
+profileModalOverlay.addEventListener('click', (e) => {
+  if (e.target === profileModalOverlay) closeProfileModal();
+});
+
+async function populateProfileModal() {
+  const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Player';
+  profileAvatar.textContent = label.charAt(0).toUpperCase();
+  profileName.textContent = label;
+  profileEmail.textContent = currentUser.email || '';
+  profileUsernameInput.value = label;
+  profileSaveMsg.textContent = '';
+
+  // Total progress across all real (active) players
+  const totalDone = allPlayers.filter(p => completed.has(p.id)).length;
+  profileTotalProgress.textContent = `${totalDone} / ${allPlayers.length}`;
+
+  // Per-league breakdown (active leagues only)
+  profileLeagueList.innerHTML = LEAGUES.filter(l => l.active).map(l => {
+    const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
+    const done = leaguePlayers.filter(p => completed.has(p.id)).length;
+    return `
+      <div class="profile-league-row">
+        <span>${l.name}</span>
+        <strong>${done} / ${leaguePlayers.length}</strong>
+      </div>
+    `;
+  }).join('');
+
+  // Worldwide leaderboard rank
+  profileRank.textContent = '…';
+  const { rank } = await generateLeaderboard('worldwide', 'all');
+  profileRank.textContent = rank ? `#${rank}` : '—';
+}
+
+profileSaveNameBtn.addEventListener('click', async () => {
+  const newName = profileUsernameInput.value.trim();
+  if (!newName) return;
+  profileSaveMsg.textContent = 'Saving…';
+  try {
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update({ username: newName })
+      .eq('user_id', currentUser.id);
+    if (error) throw error;
+    currentUsername = newName;
+    profileName.textContent = newName;
+    profileAvatar.textContent = newName.charAt(0).toUpperCase();
+    updateUserBarUI();
+    await renderLeaderboard();
+    profileSaveMsg.textContent = 'Saved!';
+  } catch (e) {
+    console.error('Failed to update username:', e);
+    profileSaveMsg.textContent = 'Could not save — try again.';
+  }
+});
+
+profileSignOutBtn.addEventListener('click', async () => {
+  closeProfileModal();
+  await supabaseClient.auth.signOut();
+});
+
 function startRound() {
   if (pool.length === 0) buildPool();
   if (pool.length === 0) {
@@ -986,6 +1202,7 @@ guessForm.addEventListener('submit', (e) => {
   // Check if a session already exists (e.g. returning visitor)
   const { data: { session } } = await supabaseClient.auth.getSession();
   currentUser = session ? session.user : null;
+  await upsertProfile();
   updateUserBarUI();
   await loadCompleted();
 
