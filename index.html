@@ -656,6 +656,18 @@ function updateUserBarUI() {
   }
 }
 
+async function upsertProfile() {
+  if (!currentUser) return;
+  const username = currentUser.user_metadata?.full_name || currentUser.email || 'Player';
+  try {
+    await supabaseClient
+      .from('profiles')
+      .upsert({ user_id: currentUser.id, username }, { onConflict: 'user_id' });
+  } catch (e) {
+    console.error('Failed to save profile:', e);
+  }
+}
+
 authBtn.addEventListener('click', async () => {
   if (currentUser) {
     await supabaseClient.auth.signOut();
@@ -697,9 +709,11 @@ async function markCompleted(playerId) {
 
 async function refreshAfterAuthChange() {
   updateUserBarUI();
+  await upsertProfile();
   await loadCompleted();
   updateProgressUI();
   applyFilterChange();
+  await renderLeaderboard();
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -770,59 +784,64 @@ resetFilterBtn.addEventListener('click', () => {
   applyFilterChange();
 });
 
-// ---- MOCK LEADERBOARD ---------------------------------------------------
-// All numbers here are placeholders until real accounts/scores exist.
-const LB_WORLDWIDE_TOTAL = 93881;
-const LB_LEAGUE_TOTALS = {
-  epl: 4200, laliga: 3900, seriea: 3800, bundesliga: 3400, ligue1: 3200,
-  eredivisie: 1800, primeira: 1600, scottish: 1100, belgian: 1200, superlig: 1500,
-  brasileirao: 3000, ligamx: 1900, mls: 2100, argentina: 2400, saudi: 1100,
-  j1league: 1600, kleague: 1000, aleague: 700, championship: 3100, rpl: 1300
-};
-const LB_CLUB_TOTALS = {
-  arsenal: 1200, mancity: 1100, spurs: 950, chelsea: 1050, liverpool: 1150,
-  barcelona: 1300, bayern: 1250
-};
-const LB_MOCK_NAMES = [
-  "alex","jamie","sofia","liam","noah","emma","oliver","ava","lucas","mia",
-  "ethan","isla","mateo","zoe","leo","nora","kai","ruby","finn","luna",
-  "priya","hugo","mila","theo","ines","axel","freja","omar","sara","yusuf"
-];
-
-function seededRandom(seedStr) {
-  let h = 0;
-  for (let i = 0; i < seedStr.length; i++) { h = (Math.imul(31, h) + seedStr.charCodeAt(i)) | 0; }
-  return function () {
-    h = Math.imul(h ^ (h >>> 15), 1 | h);
-    h ^= h + Math.imul(h ^ (h >>> 7), 61 | h);
-    return ((h ^ (h >>> 14)) >>> 0) / 4294967296;
-  };
+// ---- REAL LEADERBOARD ---------------------------------------------------
+function totalForScope(leagueId, teamId) {
+  if (leagueId === 'worldwide') return allPlayers.length;
+  if (!teamId || teamId === 'all') {
+    return allPlayers.filter(p => p.leagueId === leagueId).length;
+  }
+  return allPlayers.filter(p => p.clubId === teamId).length;
 }
 
-function lbTotalForScope(leagueId, teamId) {
-  if (leagueId === 'worldwide') return LB_WORLDWIDE_TOTAL;
-  if (!teamId || teamId === 'all') return LB_LEAGUE_TOTALS[leagueId] || 1000;
-  return LB_CLUB_TOTALS[teamId] || 300;
+function playerInScope(playerId, leagueId, teamId) {
+  const player = allPlayers.find(p => p.id === playerId);
+  if (!player) return false;
+  if (leagueId === 'worldwide') return true;
+  if (!teamId || teamId === 'all') return player.leagueId === leagueId;
+  return player.clubId === teamId;
 }
 
-function generateLeaderboard(leagueId, teamId) {
-  const scopeKey = `${leagueId}:${teamId || 'all'}`;
-  const total = lbTotalForScope(leagueId, teamId);
-  const rand = seededRandom(scopeKey);
-  const scaleFactor = Math.max(0.3, Math.min(1, total / 4000));
+async function generateLeaderboard(leagueId, teamId) {
+  const total = totalForScope(leagueId, teamId);
 
-  const entries = LB_MOCK_NAMES.map(name => {
-    const engagement = 150 + rand() * 2500;
-    return { name, score: Math.min(total, Math.round(engagement * scaleFactor)) };
+  const { data: completedRows, error: completedError } = await supabaseClient
+    .from('completed_players')
+    .select('user_id, player_id');
+  if (completedError) {
+    console.error('Failed to load leaderboard data:', completedError);
+    return { total, entries: [], rank: null };
+  }
+
+  // Count completed players per user, filtered to the current scope
+  const countsByUser = {};
+  (completedRows || []).forEach(row => {
+    if (!playerInScope(row.player_id, leagueId, teamId)) return;
+    countsByUser[row.user_id] = (countsByUser[row.user_id] || 0) + 1;
   });
 
-  const davidRaw = (leagueId === 'worldwide')
-    ? 353
-    : Math.max(5, Math.round(353 * (total / LB_WORLDWIDE_TOTAL)));
-  entries.push({ name: 'david', score: Math.min(total, davidRaw) });
+  const userIds = Object.keys(countsByUser);
+  if (userIds.length === 0) return { total, entries: [], rank: null };
 
+  const { data: profileRows, error: profileError } = await supabaseClient
+    .from('profiles')
+    .select('user_id, username')
+    .in('user_id', userIds);
+  if (profileError) console.error('Failed to load profiles:', profileError);
+
+  const nameByUserId = {};
+  (profileRows || []).forEach(p => { nameByUserId[p.user_id] = p.username; });
+
+  const entries = userIds.map(uid => ({
+    userId: uid,
+    name: nameByUserId[uid] || 'Player',
+    score: countsByUser[uid]
+  }));
   entries.sort((a, b) => b.score - a.score);
-  const rank = entries.findIndex(e => e.name === 'david') + 1;
+
+  const rank = currentUser
+    ? entries.findIndex(e => e.userId === currentUser.id) + 1
+    : null;
+
   return { total, entries, rank };
 }
 
@@ -850,29 +869,29 @@ function populateTeamSelect() {
     clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
-function renderLeaderboard() {
+async function renderLeaderboard() {
   const leagueId = lbLeagueSelect.value;
   const teamId = lbTeamSelect.value;
-  const { total, entries, rank } = generateLeaderboard(leagueId, teamId);
+  const { total, entries, rank } = await generateLeaderboard(leagueId, teamId);
   const top = entries.slice(0, 8);
 
   lbListEl.innerHTML = top.map((e, i) => `
-    <div class="lb-row${e.name === 'david' ? ' lb-you' : ''}">
+    <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
       <span class="lb-rank">${i + 1}</span>
-      <span class="lb-name">${e.name}${e.name === 'david' ? ' (you)' : ''}</span>
+      <span class="lb-name">${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
       <span class="lb-score">${e.score} / ${total}</span>
     </div>
   `).join('');
 
-  const davidInTop = top.some(e => e.name === 'david');
-  if (!davidInTop) {
-    const davidEntry = entries.find(e => e.name === 'david');
+  const youInTop = currentUser && top.some(e => e.userId === currentUser.id);
+  if (currentUser && !youInTop && rank) {
+    const youEntry = entries.find(e => e.userId === currentUser.id);
     lbYouEl.innerHTML = `
       <div class="lb-divider">···</div>
       <div class="lb-row lb-you">
         <span class="lb-rank">${rank}</span>
-        <span class="lb-name">david (you)</span>
-        <span class="lb-score">${davidEntry.score} / ${total}</span>
+        <span class="lb-name">${youEntry.name} (you)</span>
+        <span class="lb-score">${youEntry.score} / ${total}</span>
       </div>
     `;
   } else {
@@ -880,9 +899,9 @@ function renderLeaderboard() {
   }
 }
 
-lbLeagueSelect.addEventListener('change', () => {
+lbLeagueSelect.addEventListener('change', async () => {
   populateTeamSelect();
-  renderLeaderboard();
+  await renderLeaderboard();
 });
 lbTeamSelect.addEventListener('change', renderLeaderboard);
 
@@ -961,7 +980,7 @@ guessForm.addEventListener('submit', (e) => {
   renderLeagueBoxes();
   populateLeagueSelect();
   populateTeamSelect();
-  renderLeaderboard();
+  await renderLeaderboard();
   updateUserBarUI();
 
   // Check if a session already exists (e.g. returning visitor)
