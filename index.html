@@ -823,10 +823,10 @@ async function endRound(isCorrect) {
   if (isCorrect) {
     streak++;
     streakEl.textContent = streak;
-    await markCompleted(current.id);
     feedbackEl.textContent = `Correct! It's ${current.display}`;
     feedbackEl.className = 'feedback correct';
     updateProgressUI();
+    markCompleted(current.id);
   } else {
     streak = 0;
     streakEl.textContent = streak;
