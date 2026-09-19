@@ -838,6 +838,16 @@ async function endRound(isCorrect) {
   setTimeout(startRound, 1600);
 }
 
+function skipRound() {
+  clearInterval(timer);
+  locked = true;
+  guessInput.disabled = true;
+  streak = 0;
+  streakEl.textContent = streak;
+  pool.unshift(current);
+  startRound();
+}
+
 function timeUp() { if (!locked) endRound(false); }
 
 function normalize(s) {
@@ -847,8 +857,12 @@ function normalize(s) {
 guessForm.addEventListener('submit', (e) => {
   e.preventDefault();
   if (locked) return;
+  if (guessInput.value.trim() === '') {
+    skipRound();
+    return;
+  }
   const guess = normalize(guessInput.value);
-  const isCorrect = guess !== '' && current.names.some(n => normalize(n) === guess);
+  const isCorrect = current.names.some(n => normalize(n) === guess);
   endRound(isCorrect);
 });
 
