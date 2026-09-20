@@ -827,6 +827,7 @@ async function endRound(isCorrect) {
     feedbackEl.className = 'feedback correct';
     updateProgressUI();
     markCompleted(current.id);
+    renderLeaderboard();
   } else {
     streak = 0;
     streakEl.textContent = streak;
