@@ -806,9 +806,8 @@ function getSuggestions(query) {
   const matches = [];
   for (const p of allPlayers) {
     const norm = normalize(p.display);
-    const startsWithMatch = norm.split(' ').some(tok => tok.startsWith(q));
-    const containsMatch = norm.includes(q);
-    if ((startsWithMatch || containsMatch) && !seen.has(p.display)) {
+    const startsWithMatch = norm.split(/[\s-]+/).some(tok => tok.startsWith(q));
+    if (startsWithMatch && !seen.has(p.display)) {
       seen.add(p.display);
       matches.push(p.display);
       if (matches.length >= 6) break;
