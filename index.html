@@ -144,10 +144,21 @@
   .feedback.wrong { color: var(--wrong); }
 
   form { display: flex; gap: 8px; margin-top: 10px; }
-  input[type="text"] { flex: 1; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; outline: none; }
+  .guess-wrap { position: relative; flex: 1; }
+  input[type="text"] { width: 100%; flex: 1; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; outline: none; }
   input[type="text"]:focus { border-color: var(--link); }
   button { padding: 10px 18px; font-size: 15px; font-weight: 600; background: var(--link); color: white; border: none; border-radius: 4px; cursor: pointer; }
   button:disabled { opacity: 0.5; cursor: default; }
+
+  .autocomplete-list {
+    position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border); border-radius: 4px;
+    max-height: 220px; overflow-y: auto; z-index: 20;
+    display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .autocomplete-list.open { display: block; }
+  .autocomplete-item { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+  .autocomplete-item:hover, .autocomplete-item.highlighted { background: #eef3ff; }
 
   .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; }
   .done-banner { text-align: center; padding: 40px 20px; }
@@ -251,7 +262,10 @@
     <div class="feedback" id="feedback"></div>
 
     <form id="guessForm" autocomplete="off">
-      <input type="text" id="guessInput" placeholder="Who is this player?" />
+      <div class="guess-wrap">
+        <input type="text" id="guessInput" placeholder="Who is this player?" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteList"></div>
+      </div>
       <button type="submit">Guess</button>
     </form>
     <div class="hint">Guess before the bar runs out · press Enter to submit</div>
@@ -364,6 +378,7 @@ let streak = 0;
 let locked = false;
 let currentUser = null; // Supabase user object, or null if signed out
 let currentUsername = null; // display name from the profiles table
+let activeSuggestionIndex = -1;
 
 const rowsEl = document.getElementById('rows');
 const feedbackEl = document.getElementById('feedback');
@@ -371,6 +386,7 @@ const streakEl = document.getElementById('streak');
 const timerFill = document.getElementById('timerFill');
 const guessForm = document.getElementById('guessForm');
 const guessInput = document.getElementById('guessInput');
+const autocompleteList = document.getElementById('autocompleteList');
 const gameArea = document.getElementById('gameArea');
 const doneBanner = document.getElementById('doneBanner');
 const loadingBanner = document.getElementById('loadingBanner');
@@ -782,6 +798,83 @@ profileSignOutBtn.addEventListener('click', async () => {
   await supabaseClient.auth.signOut();
 });
 
+// ---- AUTOCOMPLETE / AUTOSUGGEST ------------------------------------------
+function getSuggestions(query) {
+  const q = normalize(query);
+  if (!q) return [];
+  const seen = new Set();
+  const matches = [];
+  for (const p of allPlayers) {
+    const norm = normalize(p.display);
+    const startsWithMatch = norm.split(' ').some(tok => tok.startsWith(q));
+    const containsMatch = norm.includes(q);
+    if ((startsWithMatch || containsMatch) && !seen.has(p.display)) {
+      seen.add(p.display);
+      matches.push(p.display);
+      if (matches.length >= 6) break;
+    }
+  }
+  return matches;
+}
+
+function updateHighlight(items) {
+  items.forEach((item, i) => {
+    item.classList.toggle('highlighted', i === activeSuggestionIndex);
+  });
+}
+
+function renderSuggestions(suggestions) {
+  activeSuggestionIndex = -1;
+  if (suggestions.length === 0) {
+    autocompleteList.innerHTML = '';
+    autocompleteList.classList.remove('open');
+    return;
+  }
+  autocompleteList.innerHTML = suggestions
+    .map(name => `<div class="autocomplete-item">${name}</div>`)
+    .join('');
+  autocompleteList.classList.add('open');
+}
+
+guessInput.addEventListener('input', () => {
+  renderSuggestions(getSuggestions(guessInput.value));
+});
+
+// mousedown (not click) fires before the input's blur event, so the value still gets set
+autocompleteList.addEventListener('mousedown', (e) => {
+  const item = e.target.closest('.autocomplete-item');
+  if (!item) return;
+  guessInput.value = item.textContent;
+  renderSuggestions([]);
+  guessInput.focus();
+});
+
+guessInput.addEventListener('keydown', (e) => {
+  const items = autocompleteList.querySelectorAll('.autocomplete-item');
+  if (items.length === 0) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, items.length - 1);
+    updateHighlight(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
+    updateHighlight(items);
+  } else if (e.key === 'Escape') {
+    renderSuggestions([]);
+  } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+    // A suggestion is highlighted via arrow keys — fill it in instead of submitting
+    e.preventDefault();
+    guessInput.value = items[activeSuggestionIndex].textContent;
+    renderSuggestions([]);
+  }
+});
+
+guessInput.addEventListener('blur', () => {
+  // Small delay so a click on a suggestion (mousedown) registers first
+  setTimeout(() => renderSuggestions([]), 150);
+});
+
 function startRound() {
   if (pool.length === 0) buildPool();
   if (pool.length === 0) {
@@ -797,6 +890,7 @@ function startRound() {
   feedbackEl.className = 'feedback';
   guessInput.value = '';
   guessInput.disabled = false;
+  renderSuggestions([]);
   guessInput.focus();
 
   current = pool.pop();
@@ -820,6 +914,7 @@ async function endRound(isCorrect) {
   clearInterval(timer);
   locked = true;
   guessInput.disabled = true;
+  renderSuggestions([]);
   if (isCorrect) {
     streak++;
     streakEl.textContent = streak;
@@ -842,6 +937,7 @@ function skipRound() {
   clearInterval(timer);
   locked = true;
   guessInput.disabled = true;
+  renderSuggestions([]);
   streak = 0;
   streakEl.textContent = streak;
   pool.unshift(current);
