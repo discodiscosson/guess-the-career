@@ -810,7 +810,6 @@ function getSuggestions(query) {
     if (startsWithMatch && !seen.has(p.display)) {
       seen.add(p.display);
       matches.push(p.display);
-      if (matches.length >= 6) break;
     }
   }
   return matches;
