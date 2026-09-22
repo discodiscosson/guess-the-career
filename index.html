@@ -317,6 +317,10 @@
         <strong id="profileTotalProgress">0 / 0</strong>
       </div>
       <div class="profile-stat-row">
+        <span>Longest streak</span>
+        <strong id="profileLongestStreak">0</strong>
+      </div>
+      <div class="profile-stat-row">
         <span>Leaderboard rank (worldwide)</span>
         <strong id="profileRank">—</strong>
       </div>
@@ -386,6 +390,7 @@ let locked = false;
 let currentUser = null; // Supabase user object, or null if signed out
 let currentUsername = null; // display name from the profiles table
 let currentCountryCode = null;
+let currentLongestStreak = 0;
 let activeSuggestionIndex = -1;
 
 const rowsEl = document.getElementById('rows');
@@ -474,10 +479,14 @@ async function upsertProfile() {
     // Check if a profile already exists so we don't overwrite a custom display name
     const { data: existing, error: fetchError } = await supabaseClient
       .from('profiles')
-      .select('username, country_code')
+      .select('username, country_code, longest_streak')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (fetchError) throw fetchError;
+
+    if (existing) {
+      currentLongestStreak = existing.longest_streak || 0;
+    }
 
     let countryCode = null;
     if (existing && existing.country_code) {
@@ -780,6 +789,7 @@ async function populateProfileModal() {
   // Total progress across all real players currently in the database
   const totalDone = allPlayers.filter(p => completed.has(p.id)).length;
   profileTotalProgress.textContent = `${totalDone} / ${allPlayers.length}`;
+  document.getElementById('profileLongestStreak').textContent = currentLongestStreak;
 
   // Per-league breakdown (leagues that actually have players)
   const activeLeagues = LEAGUES.filter(l => allPlayers.some(p => p.leagueId === l.id));
@@ -948,6 +958,14 @@ async function endRound(isCorrect) {
   if (isCorrect) {
     streak++;
     streakEl.textContent = streak;
+    if (currentUser && streak > (currentLongestStreak || 0)) {
+      currentLongestStreak = streak;
+      supabaseClient
+        .from('profiles')
+        .update({ longest_streak: streak })
+        .eq('user_id', currentUser.id)
+        .then(({ error }) => { if (error) console.error('Failed to update longest streak:', error); });
+    }
     feedbackEl.textContent = `Correct! It's ${current.display}`;
     feedbackEl.className = 'feedback correct';
     updateProgressUI();
