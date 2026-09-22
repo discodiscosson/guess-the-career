@@ -150,7 +150,12 @@
   .feedback.correct { color: var(--correct); }
   .feedback.wrong { color: var(--wrong); }
 
-  form { display: flex; gap: 8px; margin-top: 10px; }
+  form {
+    display: flex; gap: 8px; margin-top: 10px;
+    position: sticky; bottom: 0; background: var(--bg);
+    padding: 10px 0; z-index: 15;
+    box-shadow: 0 -4px 8px -4px rgba(0,0,0,0.08);
+  }
   .guess-wrap { position: relative; flex: 1; }
   input[type="text"] { width: 100%; flex: 1; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; outline: none; }
   input[type="text"]:focus { border-color: var(--link); }
@@ -167,7 +172,7 @@
   .autocomplete-item { padding: 8px 12px; font-size: 14px; cursor: pointer; }
   .autocomplete-item:hover, .autocomplete-item.highlighted { background: #eef3ff; }
 
-  .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; }
+  .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; margin-bottom: 20px; }
   .done-banner { text-align: center; padding: 40px 20px; }
   .done-banner h2 { margin-bottom: 8px; }
   .loading-banner { text-align: center; padding: 60px 20px; color: #888; }
