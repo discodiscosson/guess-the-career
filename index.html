@@ -977,7 +977,11 @@ function skipRound() {
 function timeUp() { if (!locked) endRound(false); }
 
 function normalize(s) {
-  return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return s.toLowerCase().trim()
+    .replace(/þ/g, 'th')
+    .replace(/ð/g, 'd')
+    .replace(/æ/g, 'ae')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function countryCodeToFlag(code) {
