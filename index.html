@@ -150,12 +150,7 @@
   .feedback.correct { color: var(--correct); }
   .feedback.wrong { color: var(--wrong); }
 
-  form {
-    display: flex; gap: 8px; margin-top: 10px;
-    position: sticky; bottom: 0; background: var(--bg);
-    padding: 10px 0; z-index: 15;
-    box-shadow: 0 -4px 8px -4px rgba(0,0,0,0.08);
-  }
+  form { display: flex; gap: 8px; margin-top: 10px; }
   .guess-wrap { position: relative; flex: 1; }
   input[type="text"] { width: 100%; flex: 1; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; outline: none; }
   input[type="text"]:focus { border-color: var(--link); }
@@ -232,6 +227,23 @@
     font-weight: 600; font-size: 14px; padding: 10px; border-radius: 5px; cursor: pointer;
   }
   .profile-signout-btn:hover { background: #fdf0ef; }
+
+  @media (max-width: 979px) {
+    #gameArea { padding-bottom: 66px; }
+    #guessForm {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bg);
+      padding: 10px 16px;
+      margin: 0;
+      z-index: 100;
+      box-shadow: 0 -4px 8px -4px rgba(0,0,0,0.08);
+    }
+    .hint { display: none; }
+    .autocomplete-list {
+      top: auto;
+      bottom: calc(100% + 2px);
+    }
+  }
 </style>
 </head>
 <body>
