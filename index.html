@@ -235,6 +235,33 @@
   }
   .profile-signout-btn:hover { background: #fdf0ef; }
 
+  .mini-profile-overlay {
+    position: fixed; inset: 0; background: rgba(32,33,34,0.4);
+    display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+  }
+  .mini-profile-overlay.open { display: flex; }
+  .mini-profile {
+    background: var(--card); border-radius: 8px; width: 100%; max-width: 280px;
+    padding: 16px; position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .mini-profile-close {
+    position: absolute; top: 8px; right: 10px; background: none; border: none;
+    font-size: 18px; line-height: 1; color: #888; cursor: pointer; padding: 2px; width: auto;
+  }
+  .mini-profile-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .mini-profile-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--link); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0;
+  }
+  .mini-profile-name { font-size: 15px; font-weight: 700; }
+  .mini-profile-leagues-title { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
+  .mini-profile-league-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f2f2f2; }
+  .mini-profile-league-row:last-child { border-bottom: none; }
+  .mini-profile-league-row strong { font-variant-numeric: tabular-nums; }
+  .mini-profile-empty { font-size: 13px; color: #888; }
+  .lb-name-link { cursor: pointer; color: inherit; text-decoration: none; }
+  .lb-name-link:hover { text-decoration: underline; }
+
 </style>
 </head>
 <body>
@@ -352,6 +379,18 @@
   </div>
 </div>
 
+<!-- ---- MINI PROFILE POPUP (leaderboard) ---- -->
+<div class="mini-profile-overlay" id="miniProfileOverlay">
+  <div class="mini-profile" id="miniProfile">
+    <button type="button" class="mini-profile-close" id="miniProfileClose">&times;</button>
+    <div class="mini-profile-header">
+      <div class="mini-profile-avatar" id="miniProfileAvatar">?</div>
+      <div class="mini-profile-name" id="miniProfileName">—</div>
+    </div>
+    <div class="mini-profile-leagues" id="miniProfileLeagues"></div>
+  </div>
+</div>
+
 <script>
 // ---- SUPABASE SETUP ---------------------------------------------------
 const SUPABASE_URL = 'https://hnsldcynysirhrwahaif.supabase.co';
@@ -434,6 +473,11 @@ const profileUsernameInput = document.getElementById('profileUsernameInput');
 const profileSaveNameBtn = document.getElementById('profileSaveNameBtn');
 const profileSaveMsg = document.getElementById('profileSaveMsg');
 const profileSignOutBtn = document.getElementById('profileSignOutBtn');
+const miniProfileOverlay = document.getElementById('miniProfileOverlay');
+const miniProfileClose = document.getElementById('miniProfileClose');
+const miniProfileAvatar = document.getElementById('miniProfileAvatar');
+const miniProfileName = document.getElementById('miniProfileName');
+const miniProfileLeagues = document.getElementById('miniProfileLeagues');
 
 // ---- LOAD PLAYERS FROM SUPABASE -----------------------------------------
 async function loadPlayersFromDatabase() {
@@ -700,6 +744,62 @@ async function generateLeaderboard(leagueId, teamId) {
   return { total, entries, rank };
 }
 
+async function getUserTopLeagues(userId) {
+  const { data, error } = await supabaseClient
+    .from('completed_players')
+    .select('player_id')
+    .eq('user_id', userId);
+  if (error) { console.error('Failed to load user progress:', error); return []; }
+  const completedIds = new Set((data || []).map(r => r.player_id));
+  const stats = LEAGUES.map(l => {
+    const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
+    if (leaguePlayers.length === 0) return null;
+    const done = leaguePlayers.filter(p => completedIds.has(p.id)).length;
+    if (done === 0) return null;
+    return { name: l.name, done, total: leaguePlayers.length, pct: done / leaguePlayers.length };
+  }).filter(Boolean);
+  stats.sort((a, b) => b.pct - a.pct);
+  return stats.slice(0, 3);
+}
+
+async function openMiniProfile(userId, username, country) {
+  miniProfileAvatar.textContent = (username || '?').charAt(0).toUpperCase();
+  miniProfileName.textContent = `${countryCodeToFlag(country)} ${username}`.trim();
+  miniProfileLeagues.innerHTML = '<div class="mini-profile-empty">Loading…</div>';
+  miniProfileOverlay.classList.add('open');
+
+  const topLeagues = await getUserTopLeagues(userId);
+  if (topLeagues.length === 0) {
+    miniProfileLeagues.innerHTML = '<div class="mini-profile-empty">No progress yet.</div>';
+    return;
+  }
+  miniProfileLeagues.innerHTML =
+    '<div class="mini-profile-leagues-title">Top leagues</div>' +
+    topLeagues.map(s => `
+      <div class="mini-profile-league-row">
+        <span>${s.name}</span>
+        <strong>${Math.round(s.pct * 100)}% (${s.done}/${s.total})</strong>
+      </div>
+    `).join('');
+}
+
+function closeMiniProfile() {
+  miniProfileOverlay.classList.remove('open');
+}
+miniProfileClose.addEventListener('click', closeMiniProfile);
+miniProfileOverlay.addEventListener('click', (e) => {
+  if (e.target === miniProfileOverlay) closeMiniProfile();
+});
+
+function handleLbNameClick(e) {
+  const link = e.target.closest('.lb-name-link');
+  if (!link) return;
+  e.preventDefault();
+  openMiniProfile(link.dataset.userId, link.dataset.username, link.dataset.country || null);
+}
+lbListEl.addEventListener('click', handleLbNameClick);
+lbYouEl.addEventListener('click', handleLbNameClick);
+
 function populateLeagueSelect() {
   const options = ['<option value="worldwide">Worldwide</option>']
     .concat(LEAGUES.map(l => `<option value="${l.id}">${l.name}</option>`));
@@ -740,7 +840,7 @@ async function renderLeaderboard() {
       <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
         <span class="lb-rank${rankClass}">${i + 1}</span>
         <span class="lb-name">
-          <span class="lb-name-text">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
+          <a href="#" class="lb-name-link lb-name-text" data-user-id="${e.userId}" data-username="${e.name}" data-country="${e.country || ''}">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</a>
           ${e.longestStreak >= 3 ? `<span class="lb-streak-badge">${streakEmoji(e.longestStreak)}${e.longestStreak}</span>` : ''}
         </span>
         <span class="lb-score">${e.score} / ${total}</span>
@@ -757,7 +857,7 @@ async function renderLeaderboard() {
       <div class="lb-row lb-you">
         <span class="lb-rank${youRankClass}">${rank}</span>
         <span class="lb-name">
-          <span class="lb-name-text">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
+          <a href="#" class="lb-name-link lb-name-text" data-user-id="${youEntry.userId}" data-username="${youEntry.name}" data-country="${youEntry.country || ''}">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</a>
           ${youEntry.longestStreak >= 3 ? `<span class="lb-streak-badge">${streakEmoji(youEntry.longestStreak)}${youEntry.longestStreak}</span>` : ''}
         </span>
         <span class="lb-score">${youEntry.score} / ${total}</span>
