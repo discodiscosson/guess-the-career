@@ -77,7 +77,13 @@
     display: flex; align-items: center; gap: 8px; padding: 6px 8px;
     border-radius: 6px; font-size: 13px; background: #fff; border: 1px solid #eee;
   }
-  .lb-rank { width: 18px; text-align: center; font-weight: 700; color: #999; flex-shrink: 0; }
+  .lb-rank {
+    width: 22px; height: 22px; text-align: center; font-weight: 700; color: #999; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px;
+  }
+  .lb-rank-gold { background: #FFD700; color: #5c4500; }
+  .lb-rank-silver { background: #C0C0C0; color: #3a3a3a; }
+  .lb-rank-bronze { background: #CD7F32; color: #fff; }
   .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-score { font-weight: 600; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .lb-row.lb-you { background: #eef3ff; border-color: var(--link); }
@@ -720,21 +726,25 @@ async function renderLeaderboard() {
   const { total, entries, rank } = await generateLeaderboard(leagueId, teamId);
   const top = entries.slice(0, 8);
 
-  lbListEl.innerHTML = top.map((e, i) => `
-    <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
-      <span class="lb-rank">${i + 1}</span>
-      <span class="lb-name">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
-      <span class="lb-score">${e.score} / ${total}</span>
-    </div>
-  `).join('');
+  lbListEl.innerHTML = top.map((e, i) => {
+    const rankClass = i === 0 ? ' lb-rank-gold' : i === 1 ? ' lb-rank-silver' : i === 2 ? ' lb-rank-bronze' : '';
+    return `
+      <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
+        <span class="lb-rank${rankClass}">${i + 1}</span>
+        <span class="lb-name">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
+        <span class="lb-score">${e.score} / ${total}</span>
+      </div>
+    `;
+  }).join('');
 
   const youInTop = currentUser && top.some(e => e.userId === currentUser.id);
   if (currentUser && !youInTop && rank) {
     const youEntry = entries.find(e => e.userId === currentUser.id);
+    const youRankClass = rank === 1 ? ' lb-rank-gold' : rank === 2 ? ' lb-rank-silver' : rank === 3 ? ' lb-rank-bronze' : '';
     lbYouEl.innerHTML = `
       <div class="lb-divider">···</div>
       <div class="lb-row lb-you">
-        <span class="lb-rank">${rank}</span>
+        <span class="lb-rank${youRankClass}">${rank}</span>
         <span class="lb-name">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
         <span class="lb-score">${youEntry.score} / ${total}</span>
       </div>
