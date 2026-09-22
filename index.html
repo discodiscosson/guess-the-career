@@ -661,27 +661,18 @@ async function generateLeaderboard(leagueId, teamId) {
     countsByUser[row.user_id] = (countsByUser[row.user_id] || 0) + 1;
   });
 
-  const userIds = Object.keys(countsByUser);
-  if (userIds.length === 0) return { total, entries: [], rank: null };
-
   const { data: profileRows, error: profileError } = await supabaseClient
     .from('profiles')
-    .select('user_id, username, country_code')
-    .in('user_id', userIds);
+    .select('user_id, username, country_code');
   if (profileError) console.error('Failed to load profiles:', profileError);
 
-  const nameByUserId = {};
-  const countryByUserId = {};
-  (profileRows || []).forEach(p => {
-    nameByUserId[p.user_id] = p.username;
-    countryByUserId[p.user_id] = p.country_code;
-  });
+  if (!profileRows || profileRows.length === 0) return { total, entries: [], rank: null };
 
-  const entries = userIds.map(uid => ({
-    userId: uid,
-    name: nameByUserId[uid] || 'Player',
-    country: countryByUserId[uid] || null,
-    score: countsByUser[uid]
+  const entries = profileRows.map(p => ({
+    userId: p.user_id,
+    name: p.username || 'Player',
+    country: p.country_code || null,
+    score: countsByUser[p.user_id] || 0
   }));
   entries.sort((a, b) => b.score - a.score);
 
