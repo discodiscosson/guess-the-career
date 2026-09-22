@@ -379,6 +379,7 @@ let streak = 0;
 let locked = false;
 let currentUser = null; // Supabase user object, or null if signed out
 let currentUsername = null; // display name from the profiles table
+let currentCountryCode = null;
 let activeSuggestionIndex = -1;
 
 const rowsEl = document.getElementById('rows');
@@ -449,7 +450,8 @@ function shuffle(arr) {
 function updateUserBarUI() {
   if (currentUser) {
     const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Signed in';
-    userStatusText.textContent = `Signed in as ${label} — your progress is saved`;
+    const flag = currentCountryCode ? countryCodeToFlag(currentCountryCode) + ' ' : '';
+    userStatusText.textContent = `${flag}Signed in as ${label} — your progress is saved`;
     authBtn.textContent = 'Sign out';
     userBar.classList.add('signed-in');
   } else {
@@ -460,25 +462,45 @@ function updateUserBarUI() {
 }
 
 async function upsertProfile() {
-  if (!currentUser) { currentUsername = null; return; }
+  if (!currentUser) { currentUsername = null; currentCountryCode = null; return; }
   const defaultName = currentUser.user_metadata?.full_name || currentUser.email || 'Player';
   try {
     // Check if a profile already exists so we don't overwrite a custom display name
     const { data: existing, error: fetchError } = await supabaseClient
       .from('profiles')
-      .select('username')
+      .select('username, country_code')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (fetchError) throw fetchError;
 
+    let countryCode = null;
+    if (existing && existing.country_code) {
+      currentCountryCode = existing.country_code;
+    } else {
+      try {
+        const geoRes = await fetch('https://ipapi.co/json/');
+        const geoData = await geoRes.json();
+        countryCode = geoData.country_code || null;
+      } catch (e) {
+        console.error('Failed to fetch country:', e);
+      }
+      currentCountryCode = countryCode;
+    }
+
     if (existing && existing.username) {
       currentUsername = existing.username;
+      if (!existing.country_code) {
+        await supabaseClient
+          .from('profiles')
+          .update({ country_code: countryCode })
+          .eq('user_id', currentUser.id);
+      }
       return;
     }
 
     await supabaseClient
       .from('profiles')
-      .upsert({ user_id: currentUser.id, username: defaultName }, { onConflict: 'user_id' });
+      .upsert({ user_id: currentUser.id, username: defaultName, country_code: countryCode }, { onConflict: 'user_id' });
     currentUsername = defaultName;
   } catch (e) {
     console.error('Failed to save profile:', e);
@@ -638,16 +660,21 @@ async function generateLeaderboard(leagueId, teamId) {
 
   const { data: profileRows, error: profileError } = await supabaseClient
     .from('profiles')
-    .select('user_id, username')
+    .select('user_id, username, country_code')
     .in('user_id', userIds);
   if (profileError) console.error('Failed to load profiles:', profileError);
 
   const nameByUserId = {};
-  (profileRows || []).forEach(p => { nameByUserId[p.user_id] = p.username; });
+  const countryByUserId = {};
+  (profileRows || []).forEach(p => {
+    nameByUserId[p.user_id] = p.username;
+    countryByUserId[p.user_id] = p.country_code;
+  });
 
   const entries = userIds.map(uid => ({
     userId: uid,
     name: nameByUserId[uid] || 'Player',
+    country: countryByUserId[uid] || null,
     score: countsByUser[uid]
   }));
   entries.sort((a, b) => b.score - a.score);
@@ -696,7 +723,7 @@ async function renderLeaderboard() {
   lbListEl.innerHTML = top.map((e, i) => `
     <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
       <span class="lb-rank">${i + 1}</span>
-      <span class="lb-name">${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
+      <span class="lb-name">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
       <span class="lb-score">${e.score} / ${total}</span>
     </div>
   `).join('');
@@ -708,7 +735,7 @@ async function renderLeaderboard() {
       <div class="lb-divider">···</div>
       <div class="lb-row lb-you">
         <span class="lb-rank">${rank}</span>
-        <span class="lb-name">${youEntry.name} (you)</span>
+        <span class="lb-name">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
         <span class="lb-score">${youEntry.score} / ${total}</span>
       </div>
     `;
@@ -744,7 +771,7 @@ profileModalOverlay.addEventListener('click', (e) => {
 async function populateProfileModal() {
   const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Player';
   profileAvatar.textContent = label.charAt(0).toUpperCase();
-  profileName.textContent = label;
+  profileName.textContent = `${countryCodeToFlag(currentCountryCode)} ${label}`.trim();
   profileEmail.textContent = currentUser.email || '';
   profileUsernameInput.value = label;
   profileSaveMsg.textContent = '';
@@ -950,6 +977,13 @@ function timeUp() { if (!locked) endRound(false); }
 
 function normalize(s) {
   return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function countryCodeToFlag(code) {
+  if (!code) return '';
+  return code.toUpperCase().replace(/./g, char =>
+    String.fromCodePoint(127397 + char.charCodeAt())
+  );
 }
 
 guessForm.addEventListener('submit', (e) => {
