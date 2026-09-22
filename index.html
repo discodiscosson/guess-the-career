@@ -85,7 +85,14 @@
   .lb-rank-gold { background: #FFD700; color: #5c4500; }
   .lb-rank-silver { background: #C0C0C0; color: #3a3a3a; }
   .lb-rank-bronze { background: #CD7F32; color: #fff; }
-  .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-name {
+    flex: 1; display: flex; align-items: center; gap: 5px; overflow: hidden; min-width: 0;
+  }
+  .lb-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-streak-badge {
+    font-size: 10px; color: #7a5c00; background: #fff3cd; border: 1px solid #ffe6a0;
+    padding: 1px 6px; border-radius: 10px; flex-shrink: 0; font-weight: 700; white-space: nowrap;
+  }
   .lb-score { font-weight: 600; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .lb-row.lb-you { background: #eef3ff; border-color: var(--link); }
   .lb-row.lb-you .lb-name, .lb-row.lb-you .lb-score { color: var(--link); font-weight: 700; }
@@ -672,7 +679,7 @@ async function generateLeaderboard(leagueId, teamId) {
 
   const { data: profileRows, error: profileError } = await supabaseClient
     .from('profiles')
-    .select('user_id, username, country_code');
+    .select('user_id, username, country_code, longest_streak');
   if (profileError) console.error('Failed to load profiles:', profileError);
 
   if (!profileRows || profileRows.length === 0) return { total, entries: [], rank: null };
@@ -681,7 +688,8 @@ async function generateLeaderboard(leagueId, teamId) {
     userId: p.user_id,
     name: p.username || 'Player',
     country: p.country_code || null,
-    score: countsByUser[p.user_id] || 0
+    score: countsByUser[p.user_id] || 0,
+    longestStreak: p.longest_streak || 0
   }));
   entries.sort((a, b) => b.score - a.score);
 
@@ -731,7 +739,10 @@ async function renderLeaderboard() {
     return `
       <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
         <span class="lb-rank${rankClass}">${i + 1}</span>
-        <span class="lb-name">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
+        <span class="lb-name">
+          <span class="lb-name-text">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
+          ${e.longestStreak > 0 ? `<span class="lb-streak-badge">🔥${e.longestStreak}</span>` : ''}
+        </span>
         <span class="lb-score">${e.score} / ${total}</span>
       </div>
     `;
@@ -745,7 +756,10 @@ async function renderLeaderboard() {
       <div class="lb-divider">···</div>
       <div class="lb-row lb-you">
         <span class="lb-rank${youRankClass}">${rank}</span>
-        <span class="lb-name">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
+        <span class="lb-name">
+          <span class="lb-name-text">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
+          ${youEntry.longestStreak > 0 ? `<span class="lb-streak-badge">🔥${youEntry.longestStreak}</span>` : ''}
+        </span>
         <span class="lb-score">${youEntry.score} / ${total}</span>
       </div>
     `;
