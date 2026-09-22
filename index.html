@@ -67,7 +67,6 @@
 
   .leaderboard-panel { display: flex; flex-direction: column; gap: 10px; }
   .lb-title { font-size: 15px; font-weight: 700; }
-  .lb-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .lb-streak-legend { display: flex; gap: 6px; font-size: 11px; color: #888; }
   .lb-streak-legend span { white-space: nowrap; }
   .lb-controls { display: flex; flex-direction: column; gap: 6px; }
@@ -317,14 +316,12 @@
   <div class="leaderboard-panel">
     <div class="scorebar">
       <div>Current streak: <strong id="streak">0</strong></div>
-    </div>
-    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
-    <div class="lb-title-row">
-      <div class="lb-title">Leaderboard</div>
       <div class="lb-streak-legend" title="Longest streak badges">
         <span>⚽3</span><span>🔥5</span><span>🌟7</span><span>🐐10</span>
       </div>
     </div>
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="lb-title">Leaderboard</div>
     <div class="lb-controls">
       <select id="lbLeagueSelect" class="lb-select"></select>
       <select id="lbTeamSelect" class="lb-select"></select>
