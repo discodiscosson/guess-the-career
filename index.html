@@ -136,7 +136,7 @@
   .timer-track { height: 6px; background: var(--track); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
   .timer-fill { height: 100%; background: var(--timer); width: 100%; transition: width 0.1s linear, background-color 0.3s; }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-top: 14px; }
   .card-header { background: var(--header-bg); text-align: center; font-weight: 700; font-size: 17px; padding: 10px 8px; border-bottom: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; font-size: 15px; }
   th, td { padding: 8px 10px; text-align: left; }
@@ -167,7 +167,7 @@
   .autocomplete-item { padding: 8px 12px; font-size: 14px; cursor: pointer; }
   .autocomplete-item:hover, .autocomplete-item.highlighted { background: #eef3ff; }
 
-  .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; margin-bottom: 20px; }
+  .hint { text-align: center; color: #888; font-size: 12px; margin-top: 10px; }
   .done-banner { text-align: center; padding: 40px 20px; }
   .done-banner h2 { margin-bottom: 8px; }
   .loading-banner { text-align: center; padding: 60px 20px; color: #888; }
@@ -266,14 +266,17 @@
     </div>
   </div>
 
-  <div class="scorebar">
-    <div>Current streak: <strong id="streak">0</strong></div>
-  </div>
-
   <div id="loadingBanner" class="loading-banner">Loading players…</div>
 
   <div id="gameArea" style="display:none;">
-    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+    <form id="guessForm" autocomplete="off">
+      <div class="guess-wrap">
+        <input type="text" id="guessInput" placeholder="Who is this player?" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteList"></div>
+      </div>
+      <button type="submit">Guess</button>
+    </form>
+    <div class="hint">Guess before the bar runs out · press Enter to submit</div>
 
     <div class="card">
       <div class="card-header">Senior career*</div>
@@ -284,15 +287,6 @@
     </div>
 
     <div class="feedback" id="feedback"></div>
-
-    <form id="guessForm" autocomplete="off">
-      <div class="guess-wrap">
-        <input type="text" id="guessInput" placeholder="Who is this player?" autocomplete="off" />
-        <div class="autocomplete-list" id="autocompleteList"></div>
-      </div>
-      <button type="submit">Guess</button>
-    </form>
-    <div class="hint">Guess before the bar runs out · press Enter to submit</div>
   </div>
 
   <div class="done-banner" id="doneBanner" style="display:none;">
@@ -303,6 +297,10 @@
   </div>
 
   <div class="leaderboard-panel">
+    <div class="scorebar">
+      <div>Current streak: <strong id="streak">0</strong></div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
     <div class="lb-title">Leaderboard</div>
     <div class="lb-controls">
       <select id="lbLeagueSelect" class="lb-select"></select>
