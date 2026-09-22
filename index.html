@@ -741,7 +741,7 @@ async function renderLeaderboard() {
         <span class="lb-rank${rankClass}">${i + 1}</span>
         <span class="lb-name">
           <span class="lb-name-text">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</span>
-          ${e.longestStreak > 0 ? `<span class="lb-streak-badge">🔥${e.longestStreak}</span>` : ''}
+          ${e.longestStreak >= 3 ? `<span class="lb-streak-badge">🔥${e.longestStreak}</span>` : ''}
         </span>
         <span class="lb-score">${e.score} / ${total}</span>
       </div>
@@ -758,7 +758,7 @@ async function renderLeaderboard() {
         <span class="lb-rank${youRankClass}">${rank}</span>
         <span class="lb-name">
           <span class="lb-name-text">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</span>
-          ${youEntry.longestStreak > 0 ? `<span class="lb-streak-badge">🔥${youEntry.longestStreak}</span>` : ''}
+          ${youEntry.longestStreak >= 3 ? `<span class="lb-streak-badge">🔥${youEntry.longestStreak}</span>` : ''}
         </span>
         <span class="lb-score">${youEntry.score} / ${total}</span>
       </div>
