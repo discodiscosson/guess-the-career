@@ -57,17 +57,16 @@
   .league-row-name { flex: 1; font-weight: 500; }
   .league-row-progress { font-size: 11px; font-weight: 700; opacity: 0.75; white-space: nowrap; }
   .league-clubs {
-    display: none; grid-template-columns: repeat(2, 1fr); gap: 6px;
-    padding: 8px 4px 2px 26px;
+    display: none; flex-direction: column; gap: 1px;
+    padding: 4px 4px 4px 26px;
   }
-  .league-clubs.open { display: grid; }
+  .league-clubs.open { display: flex; }
   .club-box {
-    padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px;
-    background: #fff; font-size: 12px; text-align: center; cursor: pointer; user-select: none;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    padding: 5px 8px; font-size: 12px; text-align: left; cursor: pointer; user-select: none;
+    border-radius: 4px; transition: background 0.15s ease, color 0.15s ease;
   }
-  .club-box:hover { border-color: var(--link); }
-  .club-box.selected { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
+  .club-box:hover { background: #f0f2f5; }
+  .club-box.selected { background: var(--link); color: #fff; font-weight: 600; }
   .reset-btn {
     align-self: flex-start; background: none; border: 1px solid var(--border); color: #555;
     padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
@@ -280,6 +279,28 @@
   .fun-fact-label:first-child { margin-top: 0; }
   .fun-fact-list { margin: 2px 0 0; padding-left: 18px; font-size: 12px; color: #555; }
   .fun-fact-list li { margin-bottom: 2px; }
+  .easy-mode-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; color: #555; }
+  .easy-mode-toggle { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+  .easy-mode-toggle input { opacity: 0; width: 0; height: 0; }
+  .easy-mode-slider {
+    position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 20px; transition: background 0.15s ease;
+  }
+  .easy-mode-slider::before {
+    content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: transform 0.15s ease;
+  }
+  .easy-mode-toggle input:checked + .easy-mode-slider { background: var(--link); }
+  .easy-mode-toggle input:checked + .easy-mode-slider::before { transform: translateX(16px); }
+  .easy-mode-label { font-weight: 600; }
+  .easy-mode-sub { font-weight: 400; color: #888; }
+
+  .league-filter-wrap { position: relative; }
+  .league-filter-overlay {
+    position: absolute; inset: 0; background: rgba(245,246,248,0.9);
+    display: none; align-items: center; justify-content: center; text-align: center;
+    font-size: 13px; font-weight: 600; color: #888; border-radius: 6px; padding: 20px; z-index: 10;
+  }
+  .league-filter-overlay.visible { display: flex; }
 
 </style>
 </head>
@@ -289,8 +310,13 @@
 
   <div class="sidebar">
     <div class="sidebar-title">Let's focus on players from...</div>
-    <div class="league-list" id="leagueList"></div>
-    <button type="button" class="reset-btn" id="resetFilterBtn">Reset (show all)</button>
+    <div class="league-filter-wrap" id="leagueFilterWrap">
+      <div class="league-list" id="leagueList"></div>
+      <button type="button" class="reset-btn" id="resetFilterBtn">Reset (show all)</button>
+      <div class="league-filter-overlay" id="leagueFilterOverlay">
+        <span>Filtering not possible in Easy Mode</span>
+      </div>
+    </div>
   </div>
 
   <div class="main">
@@ -314,6 +340,14 @@
       <button type="submit">Guess</button>
     </form>
     <div class="hint">Guess before the bar runs out · press Enter to submit</div>
+
+    <div class="easy-mode-row">
+      <label class="easy-mode-toggle">
+        <input type="checkbox" id="easyModeToggle" />
+        <span class="easy-mode-slider"></span>
+      </label>
+      <span class="easy-mode-label">Easy Mode <span class="easy-mode-sub">(20% easiest players, no filters)</span></span>
+    </div>
 
     <div class="card">
       <div class="card-header">Senior career*</div>
@@ -437,6 +471,7 @@ let completed = new Set();
 let allPlayers = []; // loaded from Supabase: {id, display, names, rows, clubId, clubName, leagueId}
 let selectedClubs = new Set(); // individual club ids selected via the league list
 let expandedLeagues = new Set(); // which leagues are currently expanded in the sidebar
+let easyMode = false;
 let pool = [];
 let current = null;
 let timer = null;
@@ -459,6 +494,8 @@ const gameArea = document.getElementById('gameArea');
 const doneBanner = document.getElementById('doneBanner');
 const loadingBanner = document.getElementById('loadingBanner');
 const leagueListEl = document.getElementById('leagueList');
+const easyModeToggle = document.getElementById('easyModeToggle');
+const leagueFilterOverlay = document.getElementById('leagueFilterOverlay');
 const lbLeagueSelect = document.getElementById('lbLeagueSelect');
 const lbTeamSelect = document.getElementById('lbTeamSelect');
 const lbListEl = document.getElementById('lbList');
@@ -501,7 +538,8 @@ async function loadPlayersFromDatabase() {
       rows: row.rows,
       clubId: row.club_id,
       clubName: row.club_name,
-      leagueId: row.league_id
+      leagueId: row.league_id,
+      isEasy: row.is_easy || false
     }));
   } catch (e) {
     console.error('Failed to load players:', e);
@@ -661,6 +699,9 @@ function effectiveSelectedClubs() {
 }
 
 function eligiblePlayers() {
+  if (easyMode) {
+    return allPlayers.filter(p => !completed.has(p.id) && p.isEasy);
+  }
   const active = effectiveSelectedClubs();
   return allPlayers.filter(p =>
     !completed.has(p.id) &&
@@ -753,6 +794,13 @@ leagueListEl.addEventListener('click', (e) => {
 resetFilterBtn.addEventListener('click', () => {
   selectedClubs.clear();
   renderLeagueBoxes();
+  applyFilterChange();
+  renderFunFact();
+});
+
+easyModeToggle.addEventListener('change', () => {
+  easyMode = easyModeToggle.checked;
+  leagueFilterOverlay.classList.toggle('visible', easyMode);
   applyFilterChange();
   renderFunFact();
 });
