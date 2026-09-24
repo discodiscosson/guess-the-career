@@ -781,7 +781,7 @@ async function renderFunFact() {
     }
     const player = bestId ? allPlayers.find(p => p.id === bestId) : null;
     if (player) {
-      easiestHtml = `🏆 Easiest player: <strong>${player.display}</strong> — guessed correctly by ${bestCount} player${bestCount === 1 ? '' : 's'}`;
+      easiestHtml = `🏆 Easiest player: <strong>${player.display}</strong> — ${player.clubName}`;
     }
   }
 
