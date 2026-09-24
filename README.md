@@ -1,7 +1,8 @@
-# guess-the-career
 # Guess the Career
 
 Gissa fotbollsspelaren utifrån deras karriärstatistik – i Wikipedia-stil.
+
+🔗 **Live:** [guess-the-career.vercel.app](https://guess-the-career.vercel.app)
 
 ## Vad är det?
 
@@ -9,25 +10,37 @@ Ett webbaserat gissningsspel där du får se en spelares karriärtabell (klubbar
 
 ## Funktioner
 
-- ⏱️ 15 sekunders timer per omgång
-- 🏆 Streak-räknare
-- 🎯 Filtrera på liga/klubb
-- ✅ Completionist-tracking (vilka spelare du redan klarat)
-- 📊 Leaderboard (mock-data just nu, riktig backend på gång)
+- ⏱️ 15 sekunders timer per omgång, med snabb rundövergång
+- 🔍 Autosök med matchning mot för-/efternamn (hanterar även isländska specialtecken)
+- 🏆 Streak-räknare (aktuell + längsta streak, sparad per användare)
+- ⚽🔥🌟🐐 Eskalerande streak-emoji vid 3/5/7/10 i rad
+- 🎯 Klubb-baserad filtrering (expanderbar liga → klubb-lista, minst 5 klubbar krävs för att filtret ska aktiveras)
+- 🟢 **Easy Mode** – bara de ~20% mest kända spelarna i de största klubbarna, ingen filtrering
+- 🔐 Google-inloggning (Supabase Auth)
+- 🌍 Landsflagga per användare (auto-detekterad via IP)
+- 🏅 Leaderboard med guld/silver/brons, worldwide eller filtrerat per liga/klubb
+- 👤 Klickbara profiler i leaderboarden – visar en persons topp 3 bästa ligor
+- 🧠 "Easiest player" / "Hardest player" – uppdateras live baserat på communityns gissningar
+- 📊 Personlig profilsida med total progress, per-liga-statistik, och möjlighet att byta visningsnamn
 
 ## Status
 
-🚧 **Under aktiv utveckling.** Detta är fortfarande en prototyp.
+🚧 **Under aktiv utveckling.**
 
-Fungerar redan:
-- Kärnspelet (gissa, timer, streak)
-- Speldata för Premier League, delar av La Liga och Bundesliga
+**Ligor med spelardata (2778 spelare totalt):**
+- Premier League
+- La Liga
+- Serie A
+- Bundesliga
+- Ligue 1
+- Allsvenskan
 
-Kvar att göra:
-- Riktig inloggning (Google/Supabase) — just nu simulerad
-- Riktig leaderboard — just nu genererad slumpdata
-- Fler ligor och klubbar
-- Egen domän och lansering
+**Kvar att göra:**
+- Fler ligor
+- Apple-inloggning
+- Dagligt streak-system ("Se svar"-token)
+- Egen domän 
+- Google AdSense
 
 ## Köra lokalt
 
@@ -36,4 +49,5 @@ Kvar att göra:
 ## Tech stack
 
 - HTML/CSS/JavaScript (vanilla, inga ramverk)
-- Planerad backend: [Supabase](https://supabase.com) för auth och leaderboard
+- [Supabase](https://supabase.com) för databas, autentisering, och realtidsdata
+- Hostat på [Vercel](https://vercel.com)
