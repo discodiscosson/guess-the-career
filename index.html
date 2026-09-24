@@ -266,6 +266,10 @@
   }
   .fun-fact.visible { display: block; }
   .fun-fact strong { color: var(--text); }
+  .fun-fact-label { font-size: 12px; font-weight: 700; color: #555; margin-top: 6px; }
+  .fun-fact-label:first-child { margin-top: 0; }
+  .fun-fact-list { margin: 2px 0 0; padding-left: 18px; font-size: 12px; color: #555; }
+  .fun-fact-list li { margin-bottom: 2px; }
 
 </style>
 </head>
@@ -415,22 +419,7 @@ const LEAGUES = [
   { id: "seriea", name: "Serie A" },
   { id: "bundesliga", name: "Bundesliga" },
   { id: "ligue1", name: "Ligue 1" },
-  { id: "allsvenskan", name: "Allsvenskan" },
-  { id: "eredivisie", name: "Eredivisie" },
-  { id: "primeira", name: "Primeira Liga" },
-  { id: "scottish", name: "Scottish Premiership" },
-  { id: "belgian", name: "Belgian Pro League" },
-  { id: "superlig", name: "Süper Lig" },
-  { id: "brasileirao", name: "Brasileirão" },
-  { id: "ligamx", name: "Liga MX" },
-  { id: "mls", name: "MLS" },
-  { id: "argentina", name: "Argentine Primera División" },
-  { id: "saudi", name: "Saudi Pro League" },
-  { id: "j1league", name: "J1 League" },
-  { id: "kleague", name: "K League 1" },
-  { id: "aleague", name: "A-League" },
-  { id: "championship", name: "Championship" },
-  { id: "rpl", name: "Russian Premier League" }
+  { id: "allsvenskan", name: "Allsvenskan" }
 ];
 
 // ---- STATE ------------------------------------------------------------
@@ -670,6 +659,7 @@ function applyFilterChange() {
   clearInterval(timer);
   buildPool();
   startRound();
+  renderFunFact();
 }
 
 function renderLeagueBoxes() {
@@ -768,10 +758,17 @@ async function renderFunFact() {
     supabaseClient.from('wrong_guesses').select('user_id, player_id')
   ]);
 
+  const inScope = (playerId) => {
+    if (selectedLeagues.size === 0) return true;
+    const player = allPlayers.find(p => p.id === playerId);
+    return player && selectedLeagues.has(player.leagueId);
+  };
+
   let easiestHtml = '';
   if (!completedRes.error && completedRes.data && completedRes.data.length > 0) {
     const usersByPlayer = {};
     completedRes.data.forEach(row => {
+      if (!inScope(row.player_id)) return;
       if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
       usersByPlayer[row.player_id].add(row.user_id);
     });
@@ -781,7 +778,10 @@ async function renderFunFact() {
     }
     const player = bestId ? allPlayers.find(p => p.id === bestId) : null;
     if (player) {
-      easiestHtml = `🏆 Easiest player: <strong>${player.display}</strong> — ${player.clubName}`;
+      easiestHtml = `
+        <div class="fun-fact-label">Easiest player:</div>
+        <ul class="fun-fact-list"><li><strong>${player.display}</strong>, ${player.clubName}</li></ul>
+      `;
     }
   }
 
@@ -789,6 +789,7 @@ async function renderFunFact() {
   if (!wrongRes.error && wrongRes.data && wrongRes.data.length > 0) {
     const wrongCountByPlayer = {};
     wrongRes.data.forEach(row => {
+      if (!inScope(row.player_id)) return;
       wrongCountByPlayer[row.player_id] = (wrongCountByPlayer[row.player_id] || 0) + 1;
     });
     let worstId = null, worstCount = 0;
@@ -797,7 +798,10 @@ async function renderFunFact() {
     }
     const player = worstId ? allPlayers.find(p => p.id === worstId) : null;
     if (player) {
-      hardestHtml = `😈 Hardest player: <strong>${player.display}</strong> — ${player.clubName}`;
+      hardestHtml = `
+        <div class="fun-fact-label">Hardest player:</div>
+        <ul class="fun-fact-list"><li><strong>${player.display}</strong>, ${player.clubName}</li></ul>
+      `;
     }
   }
 
@@ -805,7 +809,7 @@ async function renderFunFact() {
     funFactEl.classList.remove('visible');
     return;
   }
-  funFactEl.innerHTML = [easiestHtml, hardestHtml].filter(Boolean).join('<br>');
+  funFactEl.innerHTML = easiestHtml + hardestHtml;
   funFactEl.classList.add('visible');
 }
 
