@@ -787,14 +787,13 @@ async function renderFunFact() {
 
   let hardestHtml = '';
   if (!wrongRes.error && wrongRes.data && wrongRes.data.length > 0) {
-    const usersByPlayer = {};
+    const wrongCountByPlayer = {};
     wrongRes.data.forEach(row => {
-      if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
-      usersByPlayer[row.player_id].add(row.user_id);
+      wrongCountByPlayer[row.player_id] = (wrongCountByPlayer[row.player_id] || 0) + 1;
     });
     let worstId = null, worstCount = 0;
-    for (const [playerId, userSet] of Object.entries(usersByPlayer)) {
-      if (userSet.size > worstCount) { worstCount = userSet.size; worstId = playerId; }
+    for (const [playerId, count] of Object.entries(wrongCountByPlayer)) {
+      if (count > worstCount) { worstCount = count; worstId = playerId; }
     }
     const player = worstId ? allPlayers.find(p => p.id === worstId) : null;
     if (player) {
