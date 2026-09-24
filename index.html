@@ -623,6 +623,14 @@ async function markCompleted(playerId) {
   }
 }
 
+function logWrongGuess(playerId) {
+  if (!currentUser) return;
+  supabaseClient
+    .from('wrong_guesses')
+    .insert({ user_id: currentUser.id, player_id: playerId })
+    .then(({ error }) => { if (error) console.error('Failed to log wrong guess:', error); });
+}
+
 async function refreshAfterAuthChange() {
   await upsertProfile();
   updateUserBarUI();
@@ -755,34 +763,50 @@ async function generateLeaderboard(leagueId, teamId) {
 }
 
 async function renderFunFact() {
-  const { data: completedRows, error } = await supabaseClient
-    .from('completed_players')
-    .select('user_id, player_id');
-  if (error || !completedRows || completedRows.length === 0) {
-    funFactEl.classList.remove('visible');
-    return;
-  }
+  const [completedRes, wrongRes] = await Promise.all([
+    supabaseClient.from('completed_players').select('user_id, player_id'),
+    supabaseClient.from('wrong_guesses').select('user_id, player_id')
+  ]);
 
-  const usersByPlayer = {};
-  completedRows.forEach(row => {
-    if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
-    usersByPlayer[row.player_id].add(row.user_id);
-  });
-
-  let bestPlayerId = null;
-  let bestCount = 0;
-  for (const [playerId, userSet] of Object.entries(usersByPlayer)) {
-    if (userSet.size > bestCount) {
-      bestCount = userSet.size;
-      bestPlayerId = playerId;
+  let easiestHtml = '';
+  if (!completedRes.error && completedRes.data && completedRes.data.length > 0) {
+    const usersByPlayer = {};
+    completedRes.data.forEach(row => {
+      if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
+      usersByPlayer[row.player_id].add(row.user_id);
+    });
+    let bestId = null, bestCount = 0;
+    for (const [playerId, userSet] of Object.entries(usersByPlayer)) {
+      if (userSet.size > bestCount) { bestCount = userSet.size; bestId = playerId; }
+    }
+    const player = bestId ? allPlayers.find(p => p.id === bestId) : null;
+    if (player) {
+      easiestHtml = `🏆 Easiest player: <strong>${player.display}</strong> — guessed correctly by ${bestCount} player${bestCount === 1 ? '' : 's'}`;
     }
   }
 
-  if (!bestPlayerId) { funFactEl.classList.remove('visible'); return; }
-  const player = allPlayers.find(p => p.id === bestPlayerId);
-  if (!player) { funFactEl.classList.remove('visible'); return; }
+  let hardestHtml = '';
+  if (!wrongRes.error && wrongRes.data && wrongRes.data.length > 0) {
+    const usersByPlayer = {};
+    wrongRes.data.forEach(row => {
+      if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
+      usersByPlayer[row.player_id].add(row.user_id);
+    });
+    let worstId = null, worstCount = 0;
+    for (const [playerId, userSet] of Object.entries(usersByPlayer)) {
+      if (userSet.size > worstCount) { worstCount = userSet.size; worstId = playerId; }
+    }
+    const player = worstId ? allPlayers.find(p => p.id === worstId) : null;
+    if (player) {
+      hardestHtml = `😈 Hardest player: <strong>${player.display}</strong> — guessed wrong by ${worstCount} player${worstCount === 1 ? '' : 's'}`;
+    }
+  }
 
-  funFactEl.innerHTML = `🏆 Easiest player: <strong>${player.display}</strong> — guessed correctly by ${bestCount} player${bestCount === 1 ? '' : 's'}`;
+  if (!easiestHtml && !hardestHtml) {
+    funFactEl.classList.remove('visible');
+    return;
+  }
+  funFactEl.innerHTML = [easiestHtml, hardestHtml].filter(Boolean).join('<br>');
   funFactEl.classList.add('visible');
 }
 
@@ -1133,6 +1157,7 @@ async function endRound(isCorrect) {
     feedbackEl.className = 'feedback wrong';
     // not completed — put it back into the pool for a later round
     pool.unshift(current);
+    renderFunFact();
   }
   setTimeout(startRound, 700);
 }
@@ -1182,6 +1207,7 @@ guessForm.addEventListener('submit', (e) => {
   }
   const guess = normalize(guessInput.value);
   const isCorrect = current.names.some(n => normalize(n) === guess);
+  if (!isCorrect) logWrongGuess(current.id);
   endRound(isCorrect);
 });
 
