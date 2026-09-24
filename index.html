@@ -35,29 +35,39 @@
   .layout { display: flex; flex-direction: column; gap: 20px; }
   .sidebar { display: flex; flex-direction: column; gap: 10px; }
   .sidebar-title { font-size: 13px; font-weight: 600; color: #444; }
-  .league-boxes {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-    max-height: 152px; overflow-y: auto; padding-right: 4px; margin-right: -4px;
+  .league-list { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; padding-right: 4px; margin-right: -4px; }
+  .league-list::-webkit-scrollbar { width: 6px; }
+  .league-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  .league-list::-webkit-scrollbar-track { background: transparent; }
+  .league-item { display: flex; flex-direction: column; }
+  .league-row {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    cursor: pointer; user-select: none; font-size: 13px;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
-  .league-boxes::-webkit-scrollbar { width: 6px; }
-  .league-boxes::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-  .league-boxes::-webkit-scrollbar-track { background: transparent; }
-  .league-box {
-    padding: 10px 8px; border: 1px solid var(--border); border-radius: 6px;
-    background: #fff; font-size: 13px; line-height: 1.3; cursor: pointer; user-select: none;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    height: 72px;
+  .league-row:hover { border-color: var(--link); }
+  .league-row.active { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
+  .league-row.partial { border-color: var(--link); border-width: 2px; }
+  .league-arrow {
+    background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 11px; color: inherit;
+    transform: rotate(0deg); transition: transform 0.15s ease; flex-shrink: 0; width: auto;
   }
-  .league-box:hover { border-color: var(--link); }
-  .league-box.active { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
-  .league-box.disabled { opacity: 0.45; cursor: default; position: relative; }
-  .league-box.disabled:hover { border-color: var(--border); }
-  .league-name { font-weight: 500; }
-  .league-progress {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: #888;
+  .league-arrow.open { transform: rotate(90deg); }
+  .league-row-name { flex: 1; font-weight: 500; }
+  .league-row-progress { font-size: 11px; font-weight: 700; opacity: 0.75; white-space: nowrap; }
+  .league-clubs {
+    display: none; grid-template-columns: repeat(2, 1fr); gap: 6px;
+    padding: 8px 4px 2px 26px;
   }
-  .league-box.active .league-progress { color: rgba(255,255,255,0.85); }
+  .league-clubs.open { display: grid; }
+  .club-box {
+    padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px;
+    background: #fff; font-size: 12px; text-align: center; cursor: pointer; user-select: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .club-box:hover { border-color: var(--link); }
+  .club-box.selected { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
   .reset-btn {
     align-self: flex-start; background: none; border: 1px solid var(--border); color: #555;
     padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
@@ -279,7 +289,7 @@
 
   <div class="sidebar">
     <div class="sidebar-title">Let's focus on players from...</div>
-    <div class="league-boxes" id="leagueBoxes"></div>
+    <div class="league-list" id="leagueList"></div>
     <button type="button" class="reset-btn" id="resetFilterBtn">Reset (show all)</button>
   </div>
 
@@ -425,7 +435,8 @@ const LEAGUES = [
 // ---- STATE ------------------------------------------------------------
 let completed = new Set();
 let allPlayers = []; // loaded from Supabase: {id, display, names, rows, clubId, clubName, leagueId}
-let selectedLeagues = new Set(); // empty = no filter, all leagues eligible
+let selectedClubs = new Set(); // individual club ids selected via the league list
+let expandedLeagues = new Set(); // which leagues are currently expanded in the sidebar
 let pool = [];
 let current = null;
 let timer = null;
@@ -447,7 +458,7 @@ const autocompleteList = document.getElementById('autocompleteList');
 const gameArea = document.getElementById('gameArea');
 const doneBanner = document.getElementById('doneBanner');
 const loadingBanner = document.getElementById('loadingBanner');
-const leagueBoxesEl = document.getElementById('leagueBoxes');
+const leagueListEl = document.getElementById('leagueList');
 const lbLeagueSelect = document.getElementById('lbLeagueSelect');
 const lbTeamSelect = document.getElementById('lbTeamSelect');
 const lbListEl = document.getElementById('lbList');
@@ -644,10 +655,16 @@ function renderPlayer(player) {
   `).join('');
 }
 
+function effectiveSelectedClubs() {
+  // Fewer than 5 clubs selected acts as "no filter" (unfiltered game)
+  return selectedClubs.size >= 5 ? selectedClubs : new Set();
+}
+
 function eligiblePlayers() {
+  const active = effectiveSelectedClubs();
   return allPlayers.filter(p =>
     !completed.has(p.id) &&
-    (selectedLeagues.size === 0 || selectedLeagues.has(p.leagueId))
+    (active.size === 0 || active.has(p.clubId))
   );
 }
 
@@ -662,36 +679,82 @@ function applyFilterChange() {
   renderFunFact();
 }
 
+function clubsForLeague(leagueId) {
+  const map = new Map();
+  allPlayers.filter(p => p.leagueId === leagueId).forEach(p => {
+    if (!map.has(p.clubId)) map.set(p.clubId, p.clubName);
+  });
+  return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+}
+
 function renderLeagueBoxes() {
-  leagueBoxesEl.innerHTML = LEAGUES.map(l => {
+  leagueListEl.innerHTML = LEAGUES.map(l => {
     const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
-    const isActive = leaguePlayers.length > 0;
     const done = leaguePlayers.filter(p => completed.has(p.id)).length;
-    const progressText = isActive ? `${done} / ${leaguePlayers.length}` : 'Coming soon';
+    const total = leaguePlayers.length;
+    const clubs = clubsForLeague(l.id);
+    const allSelected = clubs.length > 0 && clubs.every(c => selectedClubs.has(c.id));
+    const someSelected = clubs.some(c => selectedClubs.has(c.id));
+    const expanded = expandedLeagues.has(l.id);
     return `
-    <div class="league-box${selectedLeagues.has(l.id) ? ' active' : ''}${isActive ? '' : ' disabled'}" data-league="${l.id}" data-active="${isActive}">
-      <span class="league-name">${l.name}</span>
-      <span class="league-progress">${progressText}</span>
-    </div>
+      <div class="league-item">
+        <div class="league-row${allSelected ? ' active' : ''}${!allSelected && someSelected ? ' partial' : ''}" data-league="${l.id}">
+          <button type="button" class="league-arrow${expanded ? ' open' : ''}" data-league-arrow="${l.id}">▸</button>
+          <span class="league-row-name">${l.name}</span>
+          <span class="league-row-progress">${done} / ${total}</span>
+        </div>
+        <div class="league-clubs${expanded ? ' open' : ''}" data-clubs-for="${l.id}">
+          ${clubs.map(c => `
+            <div class="club-box${selectedClubs.has(c.id) ? ' selected' : ''}" data-club="${c.id}">${c.name}</div>
+          `).join('')}
+        </div>
+      </div>
   `;
   }).join('');
 }
 
-leagueBoxesEl.addEventListener('click', (e) => {
-  const box = e.target.closest('.league-box');
-  if (!box) return;
-  if (box.dataset.active !== 'true') return; // leagues with no player data yet aren't selectable
-  const id = box.dataset.league;
-  if (selectedLeagues.has(id)) selectedLeagues.delete(id);
-  else selectedLeagues.add(id);
-  renderLeagueBoxes();
-  applyFilterChange();
+leagueListEl.addEventListener('click', (e) => {
+  const arrow = e.target.closest('[data-league-arrow]');
+  if (arrow) {
+    const id = arrow.dataset.leagueArrow;
+    if (expandedLeagues.has(id)) expandedLeagues.delete(id);
+    else expandedLeagues.add(id);
+    renderLeagueBoxes();
+    return;
+  }
+
+  const clubBox = e.target.closest('.club-box');
+  if (clubBox) {
+    const id = clubBox.dataset.club;
+    if (selectedClubs.has(id)) selectedClubs.delete(id);
+    else selectedClubs.add(id);
+    renderLeagueBoxes();
+    applyFilterChange();
+    renderFunFact();
+    return;
+  }
+
+  const row = e.target.closest('.league-row');
+  if (row) {
+    const leagueId = row.dataset.league;
+    const clubs = clubsForLeague(leagueId);
+    const allSelected = clubs.length > 0 && clubs.every(c => selectedClubs.has(c.id));
+    if (allSelected) {
+      clubs.forEach(c => selectedClubs.delete(c.id));
+    } else {
+      clubs.forEach(c => selectedClubs.add(c.id));
+    }
+    renderLeagueBoxes();
+    applyFilterChange();
+    renderFunFact();
+  }
 });
 
 resetFilterBtn.addEventListener('click', () => {
-  selectedLeagues.clear();
+  selectedClubs.clear();
   renderLeagueBoxes();
   applyFilterChange();
+  renderFunFact();
 });
 
 // ---- REAL LEADERBOARD ---------------------------------------------------
@@ -759,9 +822,10 @@ async function renderFunFact() {
   ]);
 
   const inScope = (playerId) => {
-    if (selectedLeagues.size === 0) return true;
+    const active = effectiveSelectedClubs();
+    if (active.size === 0) return true;
     const player = allPlayers.find(p => p.id === playerId);
-    return player && selectedLeagues.has(player.leagueId);
+    return player && active.has(player.clubId);
   };
 
   let easiestHtml = '';
