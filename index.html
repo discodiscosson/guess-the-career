@@ -829,61 +829,35 @@ easyModeToggle.addEventListener('change', () => {
 });
 
 // ---- REAL LEADERBOARD ---------------------------------------------------
-function totalForScope(leagueId, teamId) {
-  if (leagueId === 'worldwide') return allPlayers.length;
-  if (!teamId || teamId === 'all') {
-    return allPlayers.filter(p => p.leagueId === leagueId).length;
-  }
-  return allPlayers.filter(p => p.clubId === teamId).length;
-}
-
-function playerInScope(playerId, leagueId, teamId) {
-  const player = allPlayers.find(p => p.id === playerId);
-  if (!player) return false;
-  if (leagueId === 'worldwide') return true;
-  if (!teamId || teamId === 'all') return player.leagueId === leagueId;
-  return player.clubId === teamId;
-}
-
+// The server counts scores and ranks. The browser only receives the top list
+// plus the signed-in user's own row (see get_leaderboard in SQL).
 async function generateLeaderboard(leagueId, teamId) {
-  const total = totalForScope(leagueId, teamId);
-
-  const { data: completedRows, error: completedError } = await supabaseClient
-    .from('completed_players')
-    .select('user_id, player_id');
-  if (completedError) {
-    console.error('Failed to load leaderboard data:', completedError);
-    return { total, entries: [], rank: null };
-  }
-
-  // Count completed players per user, filtered to the current scope
-  const countsByUser = {};
-  (completedRows || []).forEach(row => {
-    if (!playerInScope(row.player_id, leagueId, teamId)) return;
-    countsByUser[row.user_id] = (countsByUser[row.user_id] || 0) + 1;
+  const isWorldwide = leagueId === 'worldwide';
+  const toEntry = (r) => ({
+    userId: r.user_id,
+    name: r.username || 'Player',
+    country: r.country_code || null,
+    score: r.score || 0,
+    longestStreak: r.longest_streak || 0,
+    rank: r.pos
   });
 
-  const { data: profileRows, error: profileError } = await supabaseClient
-    .from('profiles')
-    .select('user_id, username, country_code, longest_streak');
-  if (profileError) console.error('Failed to load profiles:', profileError);
-
-  if (!profileRows || profileRows.length === 0) return { total, entries: [], rank: null };
-
-  const entries = profileRows.map(p => ({
-    userId: p.user_id,
-    name: p.username || 'Player',
-    country: p.country_code || null,
-    score: countsByUser[p.user_id] || 0,
-    longestStreak: p.longest_streak || 0
-  }));
-  entries.sort((a, b) => b.score - a.score);
-
-  const rank = currentUser
-    ? entries.findIndex(e => e.userId === currentUser.id) + 1
-    : null;
-
-  return { total, entries, rank };
+  try {
+    const { data, error } = await supabaseClient.rpc('get_leaderboard', {
+      p_league_id: isWorldwide ? null : leagueId,
+      p_club_id: (isWorldwide || !teamId || teamId === 'all') ? null : teamId,
+      p_limit: 8
+    });
+    if (error) throw error;
+    return {
+      total: data.total || 0,
+      entries: (data.entries || []).map(toEntry),
+      me: data.me ? toEntry(data.me) : null
+    };
+  } catch (e) {
+    console.error('Failed to load leaderboard:', e);
+    return { total: 0, entries: [], me: null };
+  }
 }
 
 // Easiest/Hardest player are calculated on the server (player names are hidden from the browser)
@@ -1011,14 +985,14 @@ function populateTeamSelect() {
 async function renderLeaderboard() {
   const leagueId = lbLeagueSelect.value;
   const teamId = lbTeamSelect.value;
-  const { total, entries, rank } = await generateLeaderboard(leagueId, teamId);
-  const top = entries.slice(0, 8);
+  const { total, entries, me } = await generateLeaderboard(leagueId, teamId);
+  const top = entries;
 
-  lbListEl.innerHTML = top.map((e, i) => {
-    const rankClass = i === 0 ? ' lb-rank-gold' : i === 1 ? ' lb-rank-silver' : i === 2 ? ' lb-rank-bronze' : '';
+  lbListEl.innerHTML = top.map((e) => {
+    const rankClass = e.rank === 1 ? ' lb-rank-gold' : e.rank === 2 ? ' lb-rank-silver' : e.rank === 3 ? ' lb-rank-bronze' : '';
     return `
       <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
-        <span class="lb-rank${rankClass}">${i + 1}</span>
+        <span class="lb-rank${rankClass}">${e.rank}</span>
         <span class="lb-name">
           <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}">${countryCodeToFlag(e.country)} ${escapeHtml(e.name)}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</a>
         </span>
@@ -1028,19 +1002,18 @@ async function renderLeaderboard() {
     `;
   }).join('');
 
-  const youInTop = currentUser && top.some(e => e.userId === currentUser.id);
-  if (currentUser && !youInTop && rank) {
-    const youEntry = entries.find(e => e.userId === currentUser.id);
-    const youRankClass = rank === 1 ? ' lb-rank-gold' : rank === 2 ? ' lb-rank-silver' : rank === 3 ? ' lb-rank-bronze' : '';
+  const youInTop = currentUser && me && top.some(e => e.userId === me.userId);
+  if (currentUser && me && !youInTop) {
+    const youRankClass = me.rank === 1 ? ' lb-rank-gold' : me.rank === 2 ? ' lb-rank-silver' : me.rank === 3 ? ' lb-rank-bronze' : '';
     lbYouEl.innerHTML = `
       <div class="lb-divider">···</div>
       <div class="lb-row lb-you">
-        <span class="lb-rank${youRankClass}">${rank}</span>
+        <span class="lb-rank${youRankClass}">${me.rank}</span>
         <span class="lb-name">
-          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(youEntry.userId)}" data-username="${escapeHtml(youEntry.name)}" data-country="${escapeHtml(youEntry.country || '')}">${countryCodeToFlag(youEntry.country)} ${escapeHtml(youEntry.name)} (you)</a>
+          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(me.userId)}" data-username="${escapeHtml(me.name)}" data-country="${escapeHtml(me.country || '')}">${countryCodeToFlag(me.country)} ${escapeHtml(me.name)} (you)</a>
         </span>
-        ${youEntry.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(youEntry.longestStreak)}</span>` : ''}
-        <span class="lb-score">${youEntry.score} / ${total}</span>
+        ${me.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(me.longestStreak)}</span>` : ''}
+        <span class="lb-score">${me.score} / ${total}</span>
       </div>
     `;
   } else {
@@ -1100,8 +1073,8 @@ async function populateProfileModal() {
 
   // Worldwide leaderboard rank
   profileRank.textContent = '…';
-  const { rank } = await generateLeaderboard('worldwide', 'all');
-  profileRank.textContent = rank ? `#${rank}` : '—';
+  const { me } = await generateLeaderboard('worldwide', 'all');
+  profileRank.textContent = me ? `#${me.rank}` : '—';
 }
 
 profileSaveNameBtn.addEventListener('click', async () => {
