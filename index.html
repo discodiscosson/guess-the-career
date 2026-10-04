@@ -423,7 +423,7 @@
       <div class="profile-setting-row">
         <label for="profileUsernameInput">Display name (shown on leaderboard)</label>
         <div class="profile-input-row">
-          <input type="text" id="profileUsernameInput" placeholder="Your name" />
+          <input type="text" id="profileUsernameInput" placeholder="Your name" maxlength="40" />
           <button type="button" id="profileSaveNameBtn">Save</button>
         </div>
         <div class="profile-save-msg" id="profileSaveMsg"></div>
@@ -455,8 +455,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // League groupings — used to power the left-hand filter boxes and leaderboard dropdown.
-// Whether a league is "active" (has real player data) is now computed dynamically
-// from what's actually in the database, not hardcoded here.
 const LEAGUES = [
   { id: "epl", name: "Premier League" },
   { id: "laliga", name: "La Liga" },
@@ -466,12 +464,15 @@ const LEAGUES = [
   { id: "allsvenskan", name: "Allsvenskan" }
 ];
 
-// Time per round, in seconds
+// Time per round, in seconds. Keep in sync with c_round_seconds in submit_guess (SQL).
 const ROUND_SECONDS = 20;
 
 // ---- STATE ------------------------------------------------------------
 let completed = new Set();
-let allPlayers = []; // loaded from Supabase: {id, display, names, rows, clubId, clubName, leagueId}
+// Loaded from Supabase: {id, rows, clubId, clubName, leagueId, isEasy}
+// Answers (names) are NOT sent to the browser. They are checked on the server.
+let allPlayers = [];
+let allNames = []; // [{ name, norm }] for autocomplete only (no ids)
 let selectedClubs = new Set(); // individual club ids selected via the league list
 let expandedLeagues = new Set(); // which leagues are currently expanded in the sidebar
 let easyMode = false;
@@ -480,6 +481,7 @@ let current = null;
 let timer = null;
 let streak = 0;
 let locked = false;
+let roundReady = Promise.resolve(); // resolves when the server has registered the current round
 let currentUser = null; // Supabase user object, or null if signed out
 let currentUsername = null; // display name from the profiles table
 let currentCountryCode = null;
@@ -529,15 +531,24 @@ const miniProfileAvatar = document.getElementById('miniProfileAvatar');
 const miniProfileName = document.getElementById('miniProfileName');
 const miniProfileLeagues = document.getElementById('miniProfileLeagues');
 
+// ---- SMALL HELPERS ------------------------------------------------------
+// User-controlled strings (display names, country codes) must be escaped before
+// they are placed into innerHTML.
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 // ---- LOAD PLAYERS FROM SUPABASE -----------------------------------------
 async function loadPlayersFromDatabase() {
   try {
-    const { data, error } = await supabaseClient.from('players').select('*');
+    const { data, error } = await supabaseClient
+      .from('players')
+      .select('id, club_id, club_name, league_id, rows, is_easy');
     if (error) throw error;
     allPlayers = (data || []).map(row => ({
       id: row.id,
-      display: row.display_name,
-      names: row.names,
       rows: row.rows,
       clubId: row.club_id,
       clubName: row.club_name,
@@ -547,6 +558,15 @@ async function loadPlayersFromDatabase() {
   } catch (e) {
     console.error('Failed to load players:', e);
     allPlayers = [];
+  }
+
+  try {
+    const { data, error } = await supabaseClient.rpc('all_player_names');
+    if (error) throw error;
+    allNames = (Array.isArray(data) ? data : []).map(name => ({ name, norm: normalize(name) }));
+  } catch (e) {
+    console.error('Failed to load player names:', e);
+    allNames = [];
   }
 }
 
@@ -576,7 +596,7 @@ function updateUserBarUI() {
 
 async function upsertProfile() {
   if (!currentUser) { currentUsername = null; currentCountryCode = null; return; }
-  const defaultName = currentUser.user_metadata?.full_name || currentUser.email || 'Player';
+  const defaultName = (currentUser.user_metadata?.full_name || currentUser.email || 'Player').slice(0, 40);
   try {
     // Check if a profile already exists so we don't overwrite a custom display name
     const { data: existing, error: fetchError } = await supabaseClient
@@ -597,7 +617,8 @@ async function upsertProfile() {
       try {
         const geoRes = await fetch('https://ipapi.co/json/');
         const geoData = await geoRes.json();
-        countryCode = geoData.country_code || null;
+        const cc = geoData.country_code;
+        countryCode = (typeof cc === 'string' && /^[A-Za-z]{2}$/.test(cc)) ? cc.toUpperCase() : null;
       } catch (e) {
         console.error('Failed to fetch country:', e);
       }
@@ -648,28 +669,23 @@ async function loadCompleted() {
   }
 }
 
-async function markCompleted(playerId) {
-  completed.add(playerId); // keep local UI responsive even if not signed in
-  if (!currentUser) return;
+// Ask the server whether the guess is correct. The server also saves progress,
+// wrong guesses and streaks for signed-in users.
+async function checkGuess(playerId, guess) {
   try {
-    const { error } = await supabaseClient
-      .from('completed_players')
-      .upsert(
-        { user_id: currentUser.id, player_id: playerId },
-        { onConflict: 'user_id,player_id', ignoreDuplicates: true }
-      );
-    if (error) throw error;
+    const { data, error } = await supabaseClient.rpc('submit_guess', {
+      p_player_id: playerId,
+      p_guess: guess
+    });
+    if (error || !data) {
+      console.error('submit_guess failed:', error);
+      return { status: 'error' };
+    }
+    return data;
   } catch (e) {
-    console.error('Failed to save completed player:', e);
+    console.error('submit_guess failed:', e);
+    return { status: 'error' };
   }
-}
-
-function logWrongGuess(playerId) {
-  if (!currentUser) return;
-  supabaseClient
-    .from('wrong_guesses')
-    .insert({ user_id: currentUser.id, player_id: playerId })
-    .then(({ error }) => { if (error) console.error('Failed to log wrong guess:', error); });
 }
 
 async function refreshAfterAuthChange() {
@@ -682,7 +698,12 @@ async function refreshAfterAuthChange() {
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  currentUser = session ? session.user : null;
+  const newUser = session ? session.user : null;
+  const sameUser = !!(newUser && currentUser && newUser.id === currentUser.id);
+  currentUser = newUser;
+  // Token refreshes and tab re-focus re-emit events for the same user.
+  // Don't restart the round (that would break the streak) in that case.
+  if (sameUser && event !== 'USER_UPDATED') return;
   refreshAfterAuthChange();
 });
 
@@ -718,6 +739,9 @@ function buildPool() {
 
 function applyFilterChange() {
   clearInterval(timer);
+  // Starting a new round abandons the current one, which resets the streak on the server too
+  streak = 0;
+  streakEl.textContent = streak;
   buildPool();
   startRound();
   renderFunFact();
@@ -774,7 +798,6 @@ leagueListEl.addEventListener('click', (e) => {
     else selectedClubs.add(id);
     renderLeagueBoxes();
     applyFilterChange();
-    renderFunFact();
     return;
   }
 
@@ -790,7 +813,6 @@ leagueListEl.addEventListener('click', (e) => {
     }
     renderLeagueBoxes();
     applyFilterChange();
-    renderFunFact();
   }
 });
 
@@ -798,14 +820,12 @@ resetFilterBtn.addEventListener('click', () => {
   selectedClubs.clear();
   renderLeagueBoxes();
   applyFilterChange();
-  renderFunFact();
 });
 
 easyModeToggle.addEventListener('change', () => {
   easyMode = easyModeToggle.checked;
   leagueFilterOverlay.classList.toggle('visible', easyMode);
   applyFilterChange();
-  renderFunFact();
 });
 
 // ---- REAL LEADERBOARD ---------------------------------------------------
@@ -866,65 +886,41 @@ async function generateLeaderboard(leagueId, teamId) {
   return { total, entries, rank };
 }
 
+// Easiest/Hardest player are calculated on the server (player names are hidden from the browser)
 async function renderFunFact() {
-  const [completedRes, wrongRes] = await Promise.all([
-    supabaseClient.from('completed_players').select('user_id, player_id'),
-    supabaseClient.from('wrong_guesses').select('user_id, player_id')
-  ]);
-
-  const inScope = (playerId) => {
-    const active = effectiveSelectedClubs();
-    if (active.size === 0) return true;
-    const player = allPlayers.find(p => p.id === playerId);
-    return player && active.has(player.clubId);
-  };
-
-  let easiestHtml = '';
-  if (!completedRes.error && completedRes.data && completedRes.data.length > 0) {
-    const usersByPlayer = {};
-    completedRes.data.forEach(row => {
-      if (!inScope(row.player_id)) return;
-      if (!usersByPlayer[row.player_id]) usersByPlayer[row.player_id] = new Set();
-      usersByPlayer[row.player_id].add(row.user_id);
+  const active = effectiveSelectedClubs();
+  let data = null;
+  try {
+    const res = await supabaseClient.rpc('get_fun_facts', {
+      p_club_ids: active.size === 0 ? null : Array.from(active)
     });
-    let bestId = null, bestCount = 0;
-    for (const [playerId, userSet] of Object.entries(usersByPlayer)) {
-      if (userSet.size > bestCount) { bestCount = userSet.size; bestId = playerId; }
-    }
-    const player = bestId ? allPlayers.find(p => p.id === bestId) : null;
-    if (player) {
-      easiestHtml = `
-        <div class="fun-fact-label">Easiest player:</div>
-        <ul class="fun-fact-list"><li><strong>${player.display}</strong>, ${player.clubName}</li></ul>
-      `;
-    }
+    if (res.error) throw res.error;
+    data = res.data;
+  } catch (e) {
+    console.error('Failed to load fun facts:', e);
   }
 
-  let hardestHtml = '';
-  if (!wrongRes.error && wrongRes.data && wrongRes.data.length > 0) {
-    const wrongCountByPlayer = {};
-    wrongRes.data.forEach(row => {
-      if (!inScope(row.player_id)) return;
-      wrongCountByPlayer[row.player_id] = (wrongCountByPlayer[row.player_id] || 0) + 1;
-    });
-    let worstId = null, worstCount = 0;
-    for (const [playerId, count] of Object.entries(wrongCountByPlayer)) {
-      if (count > worstCount) { worstCount = count; worstId = playerId; }
-    }
-    const player = worstId ? allPlayers.find(p => p.id === worstId) : null;
-    if (player) {
-      hardestHtml = `
-        <div class="fun-fact-label">Hardest player:</div>
-        <ul class="fun-fact-list"><li><strong>${player.display}</strong>, ${player.clubName}</li></ul>
-      `;
-    }
+  if (!data) { funFactEl.classList.remove('visible'); return; }
+
+  let html = '';
+  if (data.easiest) {
+    html += `
+      <div class="fun-fact-label">Easiest player:</div>
+      <ul class="fun-fact-list"><li><strong>${escapeHtml(data.easiest.display_name)}</strong>, ${escapeHtml(data.easiest.club_name)}</li></ul>
+    `;
+  }
+  if (data.hardest) {
+    html += `
+      <div class="fun-fact-label">Hardest player:</div>
+      <ul class="fun-fact-list"><li><strong>${escapeHtml(data.hardest.display_name)}</strong>, ${escapeHtml(data.hardest.club_name)}</li></ul>
+    `;
   }
 
-  if (!easiestHtml && !hardestHtml) {
+  if (!html) {
     funFactEl.classList.remove('visible');
     return;
   }
-  funFactEl.innerHTML = easiestHtml + hardestHtml;
+  funFactEl.innerHTML = html;
   funFactEl.classList.add('visible');
 }
 
@@ -1024,7 +1020,7 @@ async function renderLeaderboard() {
       <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
         <span class="lb-rank${rankClass}">${i + 1}</span>
         <span class="lb-name">
-          <a href="#" class="lb-name-link lb-name-text" data-user-id="${e.userId}" data-username="${e.name}" data-country="${e.country || ''}">${countryCodeToFlag(e.country)} ${e.name}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</a>
+          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}">${countryCodeToFlag(e.country)} ${escapeHtml(e.name)}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</a>
         </span>
         ${e.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(e.longestStreak)}</span>` : ''}
         <span class="lb-score">${e.score} / ${total}</span>
@@ -1041,7 +1037,7 @@ async function renderLeaderboard() {
       <div class="lb-row lb-you">
         <span class="lb-rank${youRankClass}">${rank}</span>
         <span class="lb-name">
-          <a href="#" class="lb-name-link lb-name-text" data-user-id="${youEntry.userId}" data-username="${youEntry.name}" data-country="${youEntry.country || ''}">${countryCodeToFlag(youEntry.country)} ${youEntry.name} (you)</a>
+          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(youEntry.userId)}" data-username="${escapeHtml(youEntry.name)}" data-country="${escapeHtml(youEntry.country || '')}">${countryCodeToFlag(youEntry.country)} ${escapeHtml(youEntry.name)} (you)</a>
         </span>
         ${youEntry.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(youEntry.longestStreak)}</span>` : ''}
         <span class="lb-score">${youEntry.score} / ${total}</span>
@@ -1109,7 +1105,7 @@ async function populateProfileModal() {
 }
 
 profileSaveNameBtn.addEventListener('click', async () => {
-  const newName = profileUsernameInput.value.trim();
+  const newName = profileUsernameInput.value.trim().slice(0, 40);
   if (!newName) return;
   profileSaveMsg.textContent = 'Saving…';
   try {
@@ -1136,17 +1132,14 @@ profileSignOutBtn.addEventListener('click', async () => {
 });
 
 // ---- AUTOCOMPLETE / AUTOSUGGEST ------------------------------------------
+// Uses a list of names only (no player ids), so suggestions can't be mapped to career tables.
 function getSuggestions(query) {
   const q = normalize(query);
   if (!q) return [];
-  const seen = new Set();
   const matches = [];
-  for (const p of allPlayers) {
-    const norm = normalize(p.display);
-    const startsWithMatch = norm.split(/[\s-]+/).some(tok => tok.startsWith(q));
-    if (startsWithMatch && !seen.has(p.display)) {
-      seen.add(p.display);
-      matches.push(p.display);
+  for (const item of allNames) {
+    if (item.norm.split(/[\s-]+/).some(tok => tok.startsWith(q))) {
+      matches.push(item.name);
     }
   }
   return matches;
@@ -1166,7 +1159,7 @@ function renderSuggestions(suggestions) {
     return;
   }
   autocompleteList.innerHTML = suggestions
-    .map(name => `<div class="autocomplete-item">${name}</div>`)
+    .map(name => `<div class="autocomplete-item">${escapeHtml(name)}</div>`)
     .join('');
   autocompleteList.classList.add('open');
 }
@@ -1235,6 +1228,15 @@ function startRound() {
   renderPlayer(current);
   updateProgressUI();
 
+  // Tell the server which player this user is on now (used for streak and time checks)
+  if (currentUser) {
+    roundReady = supabaseClient
+      .rpc('start_round', { p_player_id: current.id })
+      .then(({ error }) => { if (error) console.error('start_round failed:', error); });
+  } else {
+    roundReady = Promise.resolve();
+  }
+
   timerFill.style.width = '100%';
   timerFill.style.background = 'var(--timer)';
   clearInterval(timer);
@@ -1248,36 +1250,54 @@ function startRound() {
   }, 60);
 }
 
-async function endRound(isCorrect) {
+// result.status: 'correct' | 'wrong' | 'timeout' | 'rate_limited' | 'error' | 'already_completed'
+function endRound(result) {
   clearInterval(timer);
   locked = true;
   guessInput.disabled = true;
   renderSuggestions([]);
-  if (isCorrect) {
-    streak++;
+  const status = result.status;
+  let delay = 700;
+
+  if (status === 'correct') {
+    streak = (typeof result.streak === 'number') ? result.streak : streak + 1;
     streakEl.textContent = streak;
-    if (currentUser && streak > (currentLongestStreak || 0)) {
-      currentLongestStreak = streak;
-      supabaseClient
-        .from('profiles')
-        .update({ longest_streak: streak })
-        .eq('user_id', currentUser.id)
-        .then(({ error }) => { if (error) console.error('Failed to update longest streak:', error); });
+    if (typeof result.longest_streak === 'number') {
+      currentLongestStreak = Math.max(currentLongestStreak, result.longest_streak);
+    } else if (!currentUser) {
+      currentLongestStreak = Math.max(currentLongestStreak, streak);
     }
-    feedbackEl.textContent = `Correct! It's ${current.display}`;
+    feedbackEl.textContent = `Correct! It's ${result.display_name}`;
     feedbackEl.className = 'feedback correct';
+    completed.add(current.id);
     updateProgressUI();
-    markCompleted(current.id).then(() => { renderLeaderboard(); renderFunFact(); });
-  } else {
+    renderLeaderboard();
+    renderFunFact();
+  } else if (status === 'already_completed') {
+    completed.add(current.id);
+    feedbackEl.textContent = '';
+    feedbackEl.className = 'feedback';
+    updateProgressUI();
+  } else if (status === 'rate_limited' || status === 'error') {
     streak = 0;
     streakEl.textContent = streak;
-    feedbackEl.textContent = `Incorrect!`;
+    feedbackEl.textContent = status === 'rate_limited'
+      ? 'Too many wrong guesses — wait a moment.'
+      : 'Something went wrong — try again.';
+    feedbackEl.className = 'feedback wrong';
+    pool.unshift(current);
+    delay = status === 'rate_limited' ? 3000 : 1200;
+  } else {
+    // 'wrong' or 'timeout'
+    streak = 0;
+    streakEl.textContent = streak;
+    feedbackEl.textContent = 'Incorrect!';
     feedbackEl.className = 'feedback wrong';
     // not completed — put it back into the pool for a later round
     pool.unshift(current);
     renderFunFact();
   }
-  setTimeout(startRound, 700);
+  setTimeout(startRound, delay);
 }
 
 function skipRound() {
@@ -1291,7 +1311,7 @@ function skipRound() {
   startRound();
 }
 
-function timeUp() { if (!locked) endRound(false); }
+function timeUp() { if (!locked) endRound({ status: 'timeout' }); }
 
 function normalize(s) {
   return s.toLowerCase().trim()
@@ -1302,7 +1322,7 @@ function normalize(s) {
 }
 
 function countryCodeToFlag(code) {
-  if (!code) return '';
+  if (!code || !/^[A-Za-z]{2}$/.test(code)) return '';
   return code.toUpperCase().replace(/./g, char =>
     String.fromCodePoint(127397 + char.charCodeAt())
   );
@@ -1316,17 +1336,25 @@ function streakEmoji(streak) {
   return '';
 }
 
-guessForm.addEventListener('submit', (e) => {
+guessForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (locked) return;
-  if (guessInput.value.trim() === '') {
+  const text = guessInput.value;
+  if (text.trim() === '') {
     skipRound();
     return;
   }
-  const guess = normalize(guessInput.value);
-  const isCorrect = current.names.some(n => normalize(n) === guess);
-  if (!isCorrect) logWrongGuess(current.id);
-  endRound(isCorrect);
+
+  // Lock the round while the server checks the answer
+  locked = true;
+  guessInput.disabled = true;
+  clearInterval(timer);
+  renderSuggestions([]);
+
+  const player = current;
+  await roundReady;
+  const result = await checkGuess(player.id, text);
+  endRound(result);
 });
 
 (async function init() {
