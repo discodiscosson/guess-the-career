@@ -14,7 +14,7 @@ Ett webbaserat gissningsspel. Du får se en spelares karriärtabell (klubbar, s�
 - ⏱️ 20 sekunder per omgång, med snabb övergång mellan rundorna
 - 🔍 Autosök som matchar för- och efternamn (hanterar även isländska specialtecken)
 - 🎯 Filtrering per klubb: expandera en liga och välj enskilda klubbar eller hela ligor. Minst 5 klubbar krävs för att filtret ska gälla
-- 🟢 **Easy Mode**: bara de ~20 % mest kända spelarna i de största klubbarna, utan filtrering
+- 🟢 **Easy Mode**: bara de enklaste spelarna
 - 🏆 Streak: aktuell och längsta, med märken vid 3, 5, 7 och 10 i rad (⚽ 🔥 🌟 🐐)
 
 **Community**
