@@ -517,6 +517,9 @@ let currentUsername = null; // display name from the profiles table
 let currentCountryCode = null;
 let currentLongestStreak = 0;
 let activeSuggestionIndex = -1;
+let linkConflict = false; // true when linking Google to a guest hit a Google account that already exists
+let isBootstrappingGuest = false; // true while we create the anonymous guest session ourselves
+let guestBootstrap = null;
 
 const rowsEl = document.getElementById('rows');
 const feedbackEl = document.getElementById('feedback');
@@ -617,14 +620,17 @@ function shuffle(arr) {
 
 // ---- REAL AUTH + COMPLETED-TRACKING (Supabase) --------------------------
 function updateUserBarUI() {
-  if (currentUser) {
+  const isGuestSession = !!(currentUser && currentUser.is_anonymous);
+  if (currentUser && !isGuestSession) {
     const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Signed in';
     const flag = currentCountryCode ? countryCodeToFlag(currentCountryCode) + ' ' : '';
     userStatusText.textContent = `${flag}Signed in as ${label} — your progress is saved`;
     authBtn.textContent = 'Sign out';
     userBar.classList.add('signed-in');
   } else {
-    userStatusText.textContent = "Playing as guest — your progress won't be saved";
+    userStatusText.textContent = linkConflict
+      ? 'That Google account already has a profile. Sign in with it to continue (progress from this guest session is not merged).'
+      : 'Playing as guest — sign in to keep your progress and join the leaderboard';
     authBtn.textContent = 'Sign in with Google';
     userBar.classList.remove('signed-in');
   }
@@ -632,7 +638,10 @@ function updateUserBarUI() {
 
 async function upsertProfile() {
   if (!currentUser) { currentUsername = null; currentCountryCode = null; currentLongestStreak = 0; return; }
-  const defaultName = (currentUser.user_metadata?.full_name || currentUser.email || 'Player').slice(0, 40);
+  const isGuest = !!currentUser.is_anonymous;
+  const defaultName = isGuest
+    ? 'Guest'
+    : (currentUser.user_metadata?.full_name || currentUser.email || 'Player').slice(0, 40);
   try {
     // Check if a profile already exists so we don't overwrite a custom display name
     const { data: existing, error: fetchError } = await supabaseClient
@@ -646,27 +655,27 @@ async function upsertProfile() {
       currentLongestStreak = existing.longest_streak || 0;
     }
 
-    let countryCode = null;
-    if (existing && existing.country_code) {
-      currentCountryCode = existing.country_code;
-    } else {
+    // A guest who just signed in with Google keeps all progress but gets a real name
+    const needsRename = !!(existing && existing.username === 'Guest' && !isGuest);
+
+    currentCountryCode = (existing && existing.country_code) ? existing.country_code : null;
+    if (!currentCountryCode && !isGuest) {
       try {
         const geoRes = await fetch('https://ipapi.co/json/');
         const geoData = await geoRes.json();
         const cc = geoData.country_code;
-        countryCode = (typeof cc === 'string' && /^[A-Za-z]{2}$/.test(cc)) ? cc.toUpperCase() : null;
+        currentCountryCode = (typeof cc === 'string' && /^[A-Za-z]{2}$/.test(cc)) ? cc.toUpperCase() : null;
       } catch (e) {
         console.error('Failed to fetch country:', e);
       }
-      currentCountryCode = countryCode;
     }
 
-    if (existing && existing.username) {
+    if (existing && existing.username && !needsRename) {
       currentUsername = existing.username;
-      if (!existing.country_code) {
+      if (!existing.country_code && currentCountryCode) {
         await supabaseClient
           .from('profiles')
-          .update({ country_code: countryCode })
+          .update({ country_code: currentCountryCode })
           .eq('user_id', currentUser.id);
       }
       return;
@@ -674,7 +683,7 @@ async function upsertProfile() {
 
     await supabaseClient
       .from('profiles')
-      .upsert({ user_id: currentUser.id, username: defaultName, country_code: countryCode }, { onConflict: 'user_id' });
+      .upsert({ user_id: currentUser.id, username: defaultName, country_code: currentCountryCode }, { onConflict: 'user_id' });
     currentUsername = defaultName;
   } catch (e) {
     console.error('Failed to save profile:', e);
@@ -683,12 +692,64 @@ async function upsertProfile() {
 }
 
 authBtn.addEventListener('click', async () => {
-  if (currentUser) {
+  if (currentUser && !currentUser.is_anonymous) {
     await supabaseClient.auth.signOut();
+  } else if (currentUser && currentUser.is_anonymous && !linkConflict) {
+    // Attach Google to the guest account, so the guest's progress is kept
+    const { error } = await supabaseClient.auth.linkIdentity({ provider: 'google' });
+    if (error) {
+      console.error('linkIdentity failed:', error);
+      userStatusText.textContent = 'Could not connect Google. Try again.';
+    }
   } else {
+    // No guest session yet, or the Google account already exists: normal sign-in
     await supabaseClient.auth.signInWithOAuth({ provider: 'google' });
   }
 });
+
+// Create an anonymous guest session the first time a guest actually guesses
+// (not on page load, so crawlers and bots don't create accounts).
+async function ensureGuestSession() {
+  if (currentUser) return true;
+  if (guestBootstrap) return guestBootstrap;
+  guestBootstrap = (async () => {
+    isBootstrappingGuest = true;
+    try {
+      const { data, error } = await supabaseClient.auth.signInAnonymously();
+      if (error || !data || !data.user) {
+        console.error('Anonymous sign-in failed:', error);
+        return false;
+      }
+      currentUser = data.user;
+      await upsertProfile();
+      updateUserBarUI();
+      await loadCompleted();
+      return true;
+    } catch (e) {
+      console.error('Anonymous sign-in failed:', e);
+      return false;
+    } finally {
+      isBootstrappingGuest = false;
+      guestBootstrap = null;
+    }
+  })();
+  return guestBootstrap;
+}
+
+// When Google sign-in is linked to a guest but that Google account already exists,
+// Supabase sends the user back with an error in the URL.
+function detectLinkConflict() {
+  const raw = (window.location.hash || '').replace(/^#/, '') + '&' + (window.location.search || '').replace(/^\?/, '');
+  const params = new URLSearchParams(raw);
+  const code = params.get('error_code') || '';
+  const description = params.get('error_description') || '';
+  if (/identity_already_exists/i.test(code) || /already (linked|exists)/i.test(description)) {
+    linkConflict = true;
+  }
+  if (params.get('error') || params.get('error_code')) {
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
 
 async function loadCompleted() {
   if (!currentUser) { completed = new Set(); return; }
@@ -735,6 +796,8 @@ async function refreshAfterAuthChange() {
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const newUser = session ? session.user : null;
+  // While we create the guest session ourselves, don't restart the round
+  if (isBootstrappingGuest) { currentUser = newUser; return; }
   const sameUser = !!(newUser && currentUser && newUser.id === currentUser.id);
   currentUser = newUser;
   // Token refreshes and tab re-focus re-emit events for the same user.
@@ -1065,7 +1128,7 @@ lbTeamSelect.addEventListener('change', renderLeaderboard);
 
 // ---- PROFILE MODAL ---------------------------------------------------
 function openProfileModal() {
-  if (!currentUser) return;
+  if (!currentUser || currentUser.is_anonymous) return;
   profileModalOverlay.classList.add('open');
   populateProfileModal();
 }
@@ -1335,12 +1398,14 @@ function endRound(result) {
     feedbackEl.textContent = '';
     feedbackEl.className = 'feedback';
     updateProgressUI();
-  } else if (status === 'rate_limited' || status === 'error') {
+  } else if (status === 'rate_limited' || status === 'error' || status === 'guest_failed' || status === 'auth_required') {
     streak = 0;
     streakEl.textContent = streak;
     feedbackEl.textContent = status === 'rate_limited'
       ? 'Too many wrong guesses — wait a moment.'
-      : 'Something went wrong — try again.';
+      : status === 'guest_failed'
+        ? "Couldn't start a guest session. Try again in a moment or sign in with Google."
+        : 'Something went wrong — try again.';
     feedbackEl.className = 'feedback wrong';
     pool.unshift(current);
     delay = status === 'rate_limited' ? 3000 : 1200;
@@ -1409,12 +1474,26 @@ guessForm.addEventListener('submit', async (e) => {
   renderSuggestions([]);
 
   const player = current;
-  await roundReady;
+
+  if (!currentUser) {
+    // First guess as a guest: create an anonymous session, then register this round on the server
+    const ok = await ensureGuestSession();
+    if (!ok) {
+      endRound({ status: 'guest_failed' });
+      return;
+    }
+    const { error } = await supabaseClient.rpc('start_round', { p_player_id: player.id });
+    if (error) console.error('start_round failed:', error);
+  } else {
+    await roundReady;
+  }
+
   const result = await checkGuess(player.id, text);
   endRound(result);
 });
 
 (async function init() {
+  detectLinkConflict();
   await loadPlayersFromDatabase();
 
   loadingBanner.style.display = 'none';
