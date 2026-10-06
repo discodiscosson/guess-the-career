@@ -242,6 +242,25 @@
     font-weight: 600; font-size: 14px; padding: 10px; border-radius: 5px; cursor: pointer;
   }
   .profile-signout-btn:hover { background: #fdf0ef; }
+  .profile-delete-link {
+    display: block; margin: 12px auto 0; background: none; border: none; color: #888;
+    font-size: 12px; font-weight: 500; text-decoration: underline; padding: 4px; width: auto; cursor: pointer;
+  }
+  .profile-delete-link:hover { color: var(--wrong); }
+  .profile-delete-confirm {
+    display: none; margin-top: 12px; padding: 12px; border: 1px solid var(--wrong);
+    border-radius: 6px; background: #fdf0ef; font-size: 13px; color: #444;
+  }
+  .profile-delete-confirm.open { display: block; }
+  .profile-delete-confirm p { margin: 0 0 10px; }
+  .profile-delete-confirm label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .profile-delete-confirm input[type="text"] { width: 100%; padding: 8px 10px; font-size: 14px; }
+  .profile-delete-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .profile-delete-cancel {
+    flex: 1; background: #fff; color: #555; border: 1px solid var(--border);
+    padding: 8px; font-size: 13px;
+  }
+  .profile-delete-confirm-btn { flex: 1; background: var(--wrong); padding: 8px; font-size: 13px; }
 
   .mini-profile-overlay {
     position: fixed; inset: 0; background: rgba(32,33,34,0.4);
@@ -432,6 +451,17 @@
 
     <div class="profile-footer">
       <button type="button" class="profile-signout-btn" id="profileSignOutBtn">Sign out</button>
+      <button type="button" class="profile-delete-link" id="profileDeleteBtn">Delete account</button>
+      <div class="profile-delete-confirm" id="profileDeleteConfirm">
+        <p>This permanently deletes your account, your progress and your leaderboard entry. It cannot be undone.</p>
+        <label for="profileDeleteInput">Type DELETE to confirm</label>
+        <input type="text" id="profileDeleteInput" autocomplete="off" />
+        <div class="profile-delete-actions">
+          <button type="button" class="profile-delete-cancel" id="profileDeleteCancel">Cancel</button>
+          <button type="button" class="profile-delete-confirm-btn" id="profileDeleteConfirmBtn" disabled>Delete my account</button>
+        </div>
+        <div class="profile-save-msg" id="profileDeleteMsg" style="color: var(--wrong);"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -525,6 +555,12 @@ const profileUsernameInput = document.getElementById('profileUsernameInput');
 const profileSaveNameBtn = document.getElementById('profileSaveNameBtn');
 const profileSaveMsg = document.getElementById('profileSaveMsg');
 const profileSignOutBtn = document.getElementById('profileSignOutBtn');
+const profileDeleteBtn = document.getElementById('profileDeleteBtn');
+const profileDeleteConfirm = document.getElementById('profileDeleteConfirm');
+const profileDeleteInput = document.getElementById('profileDeleteInput');
+const profileDeleteCancel = document.getElementById('profileDeleteCancel');
+const profileDeleteConfirmBtn = document.getElementById('profileDeleteConfirmBtn');
+const profileDeleteMsg = document.getElementById('profileDeleteMsg');
 const miniProfileOverlay = document.getElementById('miniProfileOverlay');
 const miniProfileClose = document.getElementById('miniProfileClose');
 const miniProfileAvatar = document.getElementById('miniProfileAvatar');
@@ -595,7 +631,7 @@ function updateUserBarUI() {
 }
 
 async function upsertProfile() {
-  if (!currentUser) { currentUsername = null; currentCountryCode = null; return; }
+  if (!currentUser) { currentUsername = null; currentCountryCode = null; currentLongestStreak = 0; return; }
   const defaultName = (currentUser.user_metadata?.full_name || currentUser.email || 'Player').slice(0, 40);
   try {
     // Check if a profile already exists so we don't overwrite a custom display name
@@ -1037,6 +1073,7 @@ function openProfileModal() {
 function closeProfileModal() {
   profileModalOverlay.classList.remove('open');
   profileSaveMsg.textContent = '';
+  resetDeleteConfirm();
 }
 
 viewProfileBtn.addEventListener('click', openProfileModal);
@@ -1102,6 +1139,53 @@ profileSaveNameBtn.addEventListener('click', async () => {
 profileSignOutBtn.addEventListener('click', async () => {
   closeProfileModal();
   await supabaseClient.auth.signOut();
+});
+
+// ---- DELETE ACCOUNT ---------------------------------------------------
+function resetDeleteConfirm() {
+  profileDeleteConfirm.classList.remove('open');
+  profileDeleteInput.value = '';
+  profileDeleteConfirmBtn.disabled = true;
+  profileDeleteCancel.disabled = false;
+  profileDeleteMsg.textContent = '';
+}
+
+profileDeleteBtn.addEventListener('click', () => {
+  resetDeleteConfirm();
+  profileDeleteConfirm.classList.add('open');
+  profileDeleteInput.focus();
+});
+
+profileDeleteCancel.addEventListener('click', resetDeleteConfirm);
+
+profileDeleteInput.addEventListener('input', () => {
+  profileDeleteConfirmBtn.disabled = profileDeleteInput.value.trim() !== 'DELETE';
+});
+
+profileDeleteConfirmBtn.addEventListener('click', async () => {
+  if (!currentUser) return;
+  if (profileDeleteInput.value.trim() !== 'DELETE') return;
+
+  profileDeleteConfirmBtn.disabled = true;
+  profileDeleteCancel.disabled = true;
+  profileDeleteMsg.textContent = 'Deleting…';
+
+  const { error } = await supabaseClient.rpc('delete_my_account');
+  if (error) {
+    console.error('delete_my_account failed:', error);
+    profileDeleteMsg.textContent = 'Could not delete the account. Try again.';
+    profileDeleteConfirmBtn.disabled = false;
+    profileDeleteCancel.disabled = false;
+    return;
+  }
+
+  closeProfileModal();
+  // The account no longer exists on the server, so only clear the local session
+  try {
+    await supabaseClient.auth.signOut({ scope: 'local' });
+  } catch (e) {
+    console.error('Local sign-out failed:', e);
+  }
 });
 
 // ---- AUTOCOMPLETE / AUTOSUGGEST ------------------------------------------
