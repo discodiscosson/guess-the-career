@@ -3,6 +3,7 @@
 Gissa fotbollsspelaren utifrån deras karriärstatistik, i Wikipedia-stil.
 
 🔗 **Live:** https://guessthecareer.disco.games
+🔒 **Privacy policy:** https://guessthecareer.disco.games/privacy.html
 
 ## Vad är det?
 
@@ -18,7 +19,7 @@ Ett webbaserat gissningsspel. Du får se en spelares karriärtabell (klubbar, s�
 - 🏆 Streak: aktuell och längsta, med märken vid 3, 5, 7 och 10 i rad (⚽ 🔥 🌟 🐐)
 
 **Community**
-- 👤 Gäster kan spela direkt. Progressen sparas och följer med när man loggar in med Google
+- 👋 Gäster kan spela direkt. Progressen sparas och följer med när man loggar in med Google
 - 🔐 Google-inloggning (Supabase Auth)
 - 🏅 Leaderboard med guld/silver/brons, worldwide eller filtrerat per liga och klubb
 - 🌍 Landsflagga per användare
@@ -46,20 +47,25 @@ Svaren rättas på servern, inte i webbläsaren:
 
 ## Kvar att göra
 
-- Privacy policy, villkor och cookie-banner
+- Villkor (Terms of Service)
 - Hubb för alla spel på www.disco.games
 - Apple-inloggning och mobilapp
 - Dagliga utmaningar och dagliga streaks
 - Fler ligor och klubbar
-- Annonser och premium-konto
+- Annonser och premium-konto (med cookie-banner när det behövs)
 
 ## Tech stack
 
 - HTML, CSS och JavaScript (vanilla, inga ramverk), en fristående `index.html`
 - [Supabase](https://supabase.com): Postgres, autentisering (Google och anonym) och databasfunktioner
 - [Vercel](https://vercel.com): hosting, med automatisk deploy vid push till `main`
-- [Cloudflare](https://www.cloudflare.com): domän och DNS
+- [Cloudflare](https://www.cloudflare.com): domän, DNS och e-postvidarebefordran
 
 ## Köra lokalt
 
 Öppna `index.html` i en webbläsare. Spelet pratar direkt med Supabase, så ingen lokal server eller installation behövs. Google-inloggning fungerar bara på de adresser som är tillåtna i Supabase.
+
+## Källor och kontakt
+
+Spelarnas karriärdata kommer från [Wikipedia](https://www.wikipedia.org).
+Kontakt: info@disco.games
