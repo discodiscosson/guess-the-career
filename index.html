@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guess the Career</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <style>
   :root {
     --header-bg: #a7c3e0;
@@ -320,6 +321,7 @@
     font-size: 13px; font-weight: 600; color: #888; border-radius: 6px; padding: 20px; z-index: 10;
   }
   .league-filter-overlay.visible { display: flex; }
+  .turnstile-box { display: flex; justify-content: center; margin-top: 10px; }
   .site-footer { margin-top: 28px; text-align: center; font-size: 12px; color: #888; }
   .site-footer a { color: #666; }
 
@@ -361,6 +363,7 @@
       <button type="submit">Guess</button>
     </form>
     <div class="hint">Guess before the bar runs out · press Enter to submit</div>
+    <div class="turnstile-box" id="turnstileBox"></div>
 
     <div class="easy-mode-row">
       <label class="easy-mode-toggle">
@@ -499,6 +502,11 @@ const LEAGUES = [
 
 // Time per round, in seconds. Keep in sync with c_round_seconds in submit_guess (SQL).
 const ROUND_SECONDS = 20;
+
+// Cloudflare Turnstile (bot protection for guest sessions). The site key is public by design.
+// The secret key only lives in Supabase (Authentication > Attack Protection).
+const TURNSTILE_SITE_KEY = '0x4AAAAAAFTRxTJSaZjCXcow';
+const CAPTCHA_MAX_AGE_MS = 240000; // Turnstile tokens expire after 300 s, keep a margin
 
 // ---- STATE ------------------------------------------------------------
 let completed = new Set();
@@ -710,6 +718,74 @@ authBtn.addEventListener('click', async () => {
   }
 });
 
+// ---- TURNSTILE (bot protection) -------------------------------------
+// Runs invisibly. A challenge is only shown if Cloudflare is unsure about the visitor.
+let turnstileWidgetId = null;
+let turnstileResolve = null;
+let captchaPrefetch = null; // { promise, at } started when a guest starts typing
+
+function waitForTurnstile(timeoutMs = 10000) {
+  return new Promise(resolve => {
+    const start = Date.now();
+    (function check() {
+      if (window.turnstile) return resolve(true);
+      if (Date.now() - start > timeoutMs) return resolve(false);
+      setTimeout(check, 100);
+    })();
+  });
+}
+
+async function getCaptchaToken() {
+  const ready = await waitForTurnstile();
+  if (!ready) { console.error('Turnstile did not load'); return null; }
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = (token) => {
+      if (settled) return;
+      settled = true;
+      turnstileResolve = null;
+      resolve(token || null);
+    };
+    turnstileResolve = finish;
+    try {
+      if (turnstileWidgetId === null) {
+        turnstileWidgetId = window.turnstile.render('#turnstileBox', {
+          sitekey: TURNSTILE_SITE_KEY,
+          execution: 'execute',
+          appearance: 'interaction-only',
+          callback: (token) => { if (turnstileResolve) turnstileResolve(token); },
+          'error-callback': () => { if (turnstileResolve) turnstileResolve(null); },
+          'timeout-callback': () => { if (turnstileResolve) turnstileResolve(null); }
+        });
+      } else {
+        window.turnstile.reset(turnstileWidgetId);
+      }
+      window.turnstile.execute(turnstileWidgetId);
+    } catch (e) {
+      console.error('Turnstile failed:', e);
+      finish(null);
+    }
+    setTimeout(() => finish(null), 60000);
+  });
+}
+
+// Start the check early (when a guest starts typing) so the first guess isn't delayed
+function prefetchCaptcha() {
+  if (currentUser || captchaPrefetch) return;
+  captchaPrefetch = { promise: getCaptchaToken(), at: Date.now() };
+}
+
+// Tokens are single-use, so each token is only handed out once
+async function takeCaptchaToken() {
+  const pre = captchaPrefetch;
+  captchaPrefetch = null;
+  if (pre && Date.now() - pre.at < CAPTCHA_MAX_AGE_MS) {
+    const token = await pre.promise;
+    if (token) return token;
+  }
+  return getCaptchaToken();
+}
+
 // Create an anonymous guest session the first time a guest actually guesses
 // (not on page load, so crawlers and bots don't create accounts).
 async function ensureGuestSession() {
@@ -718,7 +794,10 @@ async function ensureGuestSession() {
   guestBootstrap = (async () => {
     isBootstrappingGuest = true;
     try {
-      const { data, error } = await supabaseClient.auth.signInAnonymously();
+      const captchaToken = await takeCaptchaToken();
+      const { data, error } = await supabaseClient.auth.signInAnonymously(
+        captchaToken ? { options: { captchaToken } } : undefined
+      );
       if (error || !data || !data.user) {
         console.error('Anonymous sign-in failed:', error);
         return false;
@@ -1289,6 +1368,7 @@ function renderSuggestions(suggestions) {
 
 guessInput.addEventListener('input', () => {
   renderSuggestions(getSuggestions(guessInput.value));
+  if (!currentUser && guessInput.value.trim()) prefetchCaptcha();
 });
 
 // preventDefault stops the browser's default "blur the input" behavior on
