@@ -357,6 +357,13 @@
     font-size: 13px; font-weight: 600; color: #888; border-radius: 6px; padding: 20px; z-index: 10;
   }
   .league-filter-overlay.visible { display: flex; }
+  .reward-row { font-size: 12px; color: #555; margin-top: -4px; }
+  .free-player-btn {
+    margin-left: auto; padding: 5px 10px; font-size: 12px; font-weight: 600; background: #fff;
+    color: var(--link); border: 1px solid var(--link); border-radius: 5px; cursor: pointer; display: none;
+  }
+  .free-player-btn.visible { display: inline-block; }
+  .free-player-btn:hover { background: #eef3ff; }
   .turnstile-box { display: flex; justify-content: center; margin-top: 10px; }
   .site-footer { margin-top: 28px; text-align: center; font-size: 12px; color: #888; }
   .site-footer a { color: #666; }
@@ -407,6 +414,7 @@
         <span class="easy-mode-slider"></span>
       </label>
       <span class="easy-mode-label">Easy Mode</span>
+      <button type="button" class="free-player-btn" id="freePlayerBtn" title="Reveal this player and count it as completed">🎟️ Use free player</button>
     </div>
 
     <div class="card">
@@ -434,6 +442,7 @@
         <span>⚽3</span><span>🔥5</span><span>🌟7</span><span>🐐10</span>
       </div>
     </div>
+    <div class="reward-row" id="rewardRow" title="Play at least one guess on 5 days in a row to earn a free player (max 3)"></div>
     <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
     <div class="fun-fact" id="funFact"></div>
     <div class="lb-title">Leaderboard</div>
@@ -567,6 +576,8 @@ let activeSuggestionIndex = -1;
 let linkConflict = false; // true when linking Google to a guest hit a Google account that already exists
 let isBootstrappingGuest = false; // true while we create the anonymous guest session ourselves
 let guestBootstrap = null;
+let freePlayers = 0; // saved free players (server is the source of truth)
+let playDays = 0;    // days in a row with at least one guess (Swedish time)
 
 const rowsEl = document.getElementById('rows');
 const feedbackEl = document.getElementById('feedback');
@@ -591,6 +602,8 @@ const userBar = document.getElementById('userBar');
 const userStatusText = document.getElementById('userStatusText');
 const authBtn = document.getElementById('authBtn');
 const viewProfileBtn = document.getElementById('viewProfileBtn');
+const rewardRow = document.getElementById('rewardRow');
+const freePlayerBtn = document.getElementById('freePlayerBtn');
 
 // Profile modal elements
 const profileModalOverlay = document.getElementById('profileModalOverlay');
@@ -842,6 +855,7 @@ async function ensureGuestSession() {
       await upsertProfile();
       updateUserBarUI();
       await loadCompleted();
+      await loadRewards();
       return true;
     } catch (e) {
       console.error('Anonymous sign-in failed:', e);
@@ -884,6 +898,63 @@ async function loadCompleted() {
   }
 }
 
+// ---- DAILY PLAY STREAK + FREE PLAYERS ---------------------------------
+const DAYS_PER_FREE_PLAYER = 5;
+
+function renderRewards() {
+  const progress = playDays === 0 ? 0 : (playDays % DAYS_PER_FREE_PLAYER === 0 ? DAYS_PER_FREE_PLAYER : playDays % DAYS_PER_FREE_PLAYER);
+  rewardRow.textContent = `📅 ${progress}/${DAYS_PER_FREE_PLAYER} days · 🎟️ ${freePlayers} free player${freePlayers === 1 ? '' : 's'}`;
+  freePlayerBtn.classList.toggle('visible', !!currentUser && freePlayers > 0);
+}
+
+function applyRewardResult(result) {
+  if (!result) return;
+  if (typeof result.free_players === 'number') freePlayers = result.free_players;
+  if (typeof result.play_days === 'number') playDays = result.play_days;
+  renderRewards();
+}
+
+async function loadRewards() {
+  if (!currentUser) { freePlayers = 0; playDays = 0; renderRewards(); return; }
+  try {
+    const { data, error } = await supabaseClient.rpc('get_my_rewards');
+    if (error) throw error;
+    applyRewardResult(data);
+  } catch (e) {
+    console.error('Failed to load rewards:', e);
+    renderRewards();
+  }
+}
+
+freePlayerBtn.addEventListener('click', async () => {
+  if (locked || !current || !currentUser || freePlayers < 1) return;
+  // Lock the round while the server reveals the player
+  locked = true;
+  guessInput.disabled = true;
+  clearInterval(timer);
+  renderSuggestions([]);
+  freePlayerBtn.disabled = true;
+  await roundReady;
+
+  let result;
+  try {
+    const { data, error } = await supabaseClient.rpc('use_free_player', { p_player_id: current.id });
+    result = (error || !data) ? { status: 'error' } : data;
+    if (error) console.error('use_free_player failed:', error);
+  } catch (e) {
+    console.error('use_free_player failed:', e);
+    result = { status: 'error' };
+  }
+  freePlayerBtn.disabled = false;
+
+  if (result.status === 'revealed' || result.status === 'already_completed') {
+    endRound(result);
+  } else {
+    applyRewardResult(result);
+    endRound({ status: 'error' });
+  }
+});
+
 // Ask the server whether the guess is correct. The server also saves progress,
 // wrong guesses and streaks for signed-in users.
 async function checkGuess(playerId, guess) {
@@ -907,6 +978,7 @@ async function refreshAfterAuthChange() {
   await upsertProfile();
   updateUserBarUI();
   await loadCompleted();
+  await loadRewards();
   updateProgressUI();
   applyFilterChange();
   await renderLeaderboard();
@@ -1489,7 +1561,7 @@ function startRound() {
   }, 60);
 }
 
-// result.status: 'correct' | 'wrong' | 'timeout' | 'rate_limited' | 'error' | 'already_completed'
+// result.status: 'correct' | 'wrong' | 'timeout' | 'rate_limited' | 'error' | 'already_completed' | 'revealed'
 function endRound(result) {
   clearInterval(timer);
   locked = true;
@@ -1506,12 +1578,25 @@ function endRound(result) {
     } else if (!currentUser) {
       currentLongestStreak = Math.max(currentLongestStreak, streak);
     }
-    feedbackEl.textContent = `Correct! It's ${result.display_name}`;
+    feedbackEl.textContent = `Correct! It's ${result.display_name}` + (result.earned_free_player ? ' · 🎟️ Free player earned!' : '');
+    feedbackEl.className = 'feedback correct';
+    applyRewardResult(result);
+    if (result.earned_free_player) delay = 1500;
+    completed.add(current.id);
+    updateProgressUI();
+    renderLeaderboard();
+    renderFunFact();
+  } else if (status === 'revealed') {
+    // Free player used: counts as completed, the current streak is kept
+    applyRewardResult(result);
+    if (typeof result.streak === 'number') { streak = result.streak; streakEl.textContent = streak; }
+    feedbackEl.textContent = `🎟️ Free player: it's ${result.display_name}`;
     feedbackEl.className = 'feedback correct';
     completed.add(current.id);
     updateProgressUI();
     renderLeaderboard();
     renderFunFact();
+    delay = 1500;
   } else if (status === 'already_completed') {
     completed.add(current.id);
     feedbackEl.textContent = '';
@@ -1532,8 +1617,10 @@ function endRound(result) {
     // 'wrong' or 'timeout'
     streak = 0;
     streakEl.textContent = streak;
-    feedbackEl.textContent = 'Incorrect!';
+    feedbackEl.textContent = 'Incorrect!' + (result.earned_free_player ? ' · 🎟️ Free player earned!' : '');
     feedbackEl.className = 'feedback wrong';
+    applyRewardResult(result);
+    if (result.earned_free_player) delay = 1500;
     // not completed — put it back into the pool for a later round
     pool.unshift(current);
     renderFunFact();
@@ -1630,6 +1717,7 @@ guessForm.addEventListener('submit', async (e) => {
   await upsertProfile();
   updateUserBarUI();
   await loadCompleted();
+  await loadRewards();
 
   buildPool();
   startRound();
