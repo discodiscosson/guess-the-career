@@ -1446,9 +1446,15 @@ profileDeleteConfirmBtn.addEventListener('click', async () => {
 function getSuggestions(query) {
   const q = normalize(query);
   if (!q) return [];
+  // Every word typed must match the start of some word in the name,
+  // so "david a" finds "David Affengruber" and "sundgren d" finds "Daniel Sundgren".
+  const qTokens = q.split(/[\s-]+/).filter(Boolean);
+  if (qTokens.length === 0) return [];
   const matches = [];
   for (const item of allNames) {
-    if (item.norm.split(/[\s-]+/).some(tok => tok.startsWith(q))) {
+    const nameTokens = item.norm.split(/[\s-]+/);
+    if (item.norm.startsWith(q) ||
+        qTokens.every(qt => nameTokens.some(nt => nt.startsWith(qt)))) {
       matches.push(item.name);
     }
   }
