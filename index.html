@@ -179,7 +179,8 @@
   .top-bar__user { display: none; align-items: center; gap: var(--space-8); }
   .user-bar.signed-in .top-bar__user { display: inline-flex; }
   .user-bar.signed-in .auth-btn { display: none; }
-  .top-bar__name { font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  .top-bar__name { display: inline-flex; align-items: center; gap: var(--space-8); font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; max-width: 220px; min-width: 0; }
+  .top-bar__name span { overflow: hidden; text-overflow: ellipsis; }
   .avatar {
     width: 24px; height: 24px; border-radius: var(--radius-full); flex-shrink: 0;
     display: inline-flex; align-items: center; justify-content: center;
@@ -211,7 +212,8 @@
     .career-table th:last-child, .career-table td:last-child { padding-right: var(--space-12); width: 96px; }
     .infobox__section, .infobox__footnote { padding-left: var(--space-12); padding-right: var(--space-12); }
     .top-bar { padding: 0 var(--space-16); }
-    .top-bar__network, .top-bar__divider, .top-bar__status { display: none; }
+    .top-bar__network, .top-bar__divider, .top-bar__status, .top-bar__name { display: none; }
+    .top-bar__account { gap: var(--space-8); }
     .top-bar__title { font-size: 18px; }
   }
 
@@ -348,79 +350,135 @@
   .done-banner p { margin: 0; color: var(--color-text-secondary); }
   .loading-banner { text-align: center; padding: 60px 20px; color: var(--color-text-tertiary); }
 
-  /* ===== Not yet redesigned (step 2/3): league filter, leaderboard, rewards, modals ===== */
-  .sidebar { display: flex; flex-direction: column; gap: 10px; }
-  .sidebar-title { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
-  .league-list { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; padding-right: 4px; margin-right: -4px; }
+  /* ---- Shared atoms ---- */
+  .overline { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--color-text-tertiary); }
+  .flag { width: 20px; height: 14px; flex-shrink: 0; display: block; border-radius: var(--radius-xs); box-shadow: inset 0 0 0 1px var(--color-border-subtle); background: var(--color-bg-muted) center / cover no-repeat; }
+  .checkbox {
+    width: 16px; height: 16px; flex-shrink: 0; border-radius: var(--radius-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--color-bg-surface); border: 1.5px solid var(--color-border-strong);
+  }
+  .checkbox svg { width: 12px; height: 12px; display: none; }
+  .checkbox.is-checked, .checkbox.is-mixed { background: var(--color-bg-brand); border-color: var(--color-bg-brand); }
+  .checkbox.is-checked svg.checkbox__check { display: block; }
+  .checkbox.is-mixed svg.checkbox__mixed { display: block; }
+
+  /* ---- League filter ---- */
+  .sidebar { display: flex; flex-direction: column; gap: var(--space-12); }
+  .sidebar-title { padding: 0 var(--space-12); }
+  .league-filter-wrap { position: relative; display: flex; flex-direction: column; gap: var(--space-12); }
+  .league-list { display: flex; flex-direction: column; gap: var(--space-4); max-height: 520px; overflow-y: auto; }
   .league-list::-webkit-scrollbar { width: 6px; }
   .league-list::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 3px; }
-  .league-list::-webkit-scrollbar-track { background: transparent; }
-  .league-item { display: flex; flex-direction: column; }
-  .league-row {
-    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-    border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff;
-    cursor: pointer; user-select: none; font-size: 13px; line-height: 18px;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-  .league-row:hover { border-color: var(--link); }
-  .league-row.active { background: var(--link); border-color: var(--link); color: #fff; font-weight: 600; }
-  .league-row.partial { border-color: var(--link); border-width: 2px; }
+  .league-item { display: flex; flex-direction: column; border-radius: var(--radius-md); }
+  .league-item.is-expanded { background: var(--color-bg-subtle); }
+  .league-head { display: flex; flex-direction: column; gap: var(--space-8); padding: 10px var(--space-12); }
+  .league-row { display: flex; align-items: center; gap: var(--space-8); cursor: pointer; user-select: none; }
+  .league-row-name { flex: 1; min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-primary); }
+  .league-row-progress { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .league-arrow {
-    background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 11px; color: inherit;
-    transform: rotate(0deg); transition: transform 0.15s ease; flex-shrink: 0; width: auto;
+    width: 24px; height: 24px; margin: -4px -4px -4px 0; padding: 4px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; color: var(--color-text-secondary);
   }
-  .league-arrow.open { transform: rotate(90deg); }
-  .league-row-name { flex: 1; font-weight: 500; }
-  .league-row-progress { font-size: 11px; font-weight: 700; opacity: 0.75; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .league-clubs { display: none; flex-direction: column; gap: 1px; padding: 4px 4px 4px 26px; }
+  .league-arrow svg { width: 16px; height: 16px; transition: transform 0.15s ease; }
+  .league-arrow.open svg { transform: rotate(90deg); }
+  .league-arrow:hover { background: var(--color-bg-muted); }
+  .league-arrow:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  .league-meter { height: 2px; background: var(--color-timer-track); border-radius: var(--radius-full); overflow: hidden; }
+  .league-meter div { height: 100%; background: var(--color-border-strong); border-radius: var(--radius-full); }
+  .league-item.is-selected .league-meter div { background: var(--color-bg-brand); }
+  .league-clubs { display: none; flex-direction: column; padding-bottom: var(--space-8); }
   .league-clubs.open { display: flex; }
-  .club-box { padding: 5px 8px; font-size: 12px; line-height: 16px; text-align: left; cursor: pointer; user-select: none; border-radius: var(--radius-sm); transition: background 0.15s ease, color 0.15s ease; }
-  .club-box:hover { background: var(--color-bg-muted); }
-  .club-box.selected { background: var(--link); color: #fff; font-weight: 600; }
-  .reset-btn {
-    align-self: flex-start; background: var(--color-bg-surface); border: 1px solid var(--border); color: var(--color-text-primary);
-    padding: 0 12px; height: 32px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer;
+  .club-box {
+    display: flex; align-items: center; gap: var(--space-8); padding: 6px var(--space-12) 6px var(--space-32);
+    font-size: 13px; line-height: 18px; color: var(--color-text-secondary); cursor: pointer; user-select: none;
   }
-  .reset-btn:hover { background: var(--color-bg-subtle); border-color: var(--color-border-strong); }
-  .league-filter-wrap { position: relative; display: flex; flex-direction: column; gap: 10px; }
+  .club-box:hover { background: var(--color-bg-muted); }
+  .club-box.selected { color: var(--color-text-primary); }
+  .club-box__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .club-box__count { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+  .filter-hint { padding: 0 var(--space-12); font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); }
+  .reset-btn { align-self: flex-start; margin-left: var(--space-12); }
   .league-filter-overlay {
-    position: absolute; inset: 0; background: rgba(246,247,248,0.9);
+    position: absolute; inset: 0; background: rgba(246,247,248,0.88);
     display: none; align-items: center; justify-content: center; text-align: center;
-    font-size: 13px; font-weight: 600; color: var(--color-text-tertiary); border-radius: var(--radius-md); padding: 20px; z-index: 10;
+    font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-secondary); border-radius: var(--radius-md); padding: 20px; z-index: 10;
   }
   .league-filter-overlay.visible { display: flex; }
 
-  .leaderboard-panel { display: flex; flex-direction: column; gap: 10px; }
-  .scorebar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--color-text-secondary); }
-  .lb-streak-legend { display: flex; gap: 6px; font-size: 11px; color: var(--color-text-tertiary); }
-  .lb-streak-legend span { white-space: nowrap; }
-  .reward-row { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-secondary); }
-  .lb-title { font-size: 15px; line-height: 20px; font-weight: 600; margin-top: 4px; }
-  .lb-controls { display: flex; flex-direction: column; gap: 6px; }
-  .lb-select { padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: #fff; color: var(--text); }
-  .lb-select:disabled { color: var(--color-text-disabled); background: var(--color-bg-muted); }
-  .lb-list { display: flex; flex-direction: column; gap: 4px; }
-  .lb-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-md); font-size: 13px; background: #fff; border: 1px solid var(--color-border-subtle); }
-  .lb-rank { width: 22px; height: 22px; text-align: center; font-weight: 700; color: var(--color-text-tertiary); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; }
-  .lb-rank-gold { background: var(--color-medal-gold); color: #fff; }
-  .lb-rank-silver { background: var(--color-medal-silver); color: #fff; }
-  .lb-rank-bronze { background: var(--color-medal-bronze); color: #fff; }
-  .lb-name { flex: 1; display: flex; align-items: center; gap: 5px; overflow: hidden; min-width: 0; }
-  .lb-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lb-streak-emoji { font-size: 14px; flex-shrink: 0; }
-  .lb-score { font-weight: 600; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .lb-row.lb-you { background: var(--color-bg-brand-subtle); border-color: var(--color-border-success); }
-  .lb-row.lb-you .lb-name, .lb-row.lb-you .lb-score { color: var(--color-text-brand); font-weight: 700; }
-  .lb-divider { text-align: center; color: var(--color-text-disabled); font-size: 12px; margin: 2px 0; }
-  .lb-name-link { cursor: pointer; color: inherit; text-decoration: none; }
+  /* ---- Streak ---- */
+  .leaderboard-panel { display: flex; flex-direction: column; gap: var(--space-20); }
+  .streak-panel { display: flex; flex-direction: column; gap: var(--space-12); }
+  .streak-counter { display: flex; flex-direction: column; gap: var(--space-4); }
+  .streak-counter__value { display: flex; align-items: center; gap: var(--space-8); }
+  .streak-counter__value img { width: 32px; height: 32px; display: block; transition: opacity 0.2s ease; }
+  .streak-counter__value img.is-dim { opacity: 0.35; }
+  .streak-counter__value strong { font-family: var(--font-display); font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; }
+  .streak-badges { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+  .streak-badge {
+    display: inline-flex; align-items: center; gap: var(--space-4); padding: 3px var(--space-12) 3px 5px;
+    border-radius: var(--radius-full); border: 1px solid var(--color-icon-streak); background: var(--color-bg-streak);
+    font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-streak); font-variant-numeric: tabular-nums;
+  }
+  .streak-badge img { width: 22px; height: 22px; display: block; }
+  .streak-badge.is-locked { background: var(--color-bg-muted); border-color: var(--color-bg-muted); color: var(--color-text-disabled); }
+  .streak-badge.is-locked img { opacity: 0.35; }
+
+  /* ---- Daily rewards ---- */
+  .daily-rewards { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-12); margin-top: var(--space-8); }
+  .daily-rewards__icon { width: 26px; height: 26px; display: block; flex-shrink: 0; }
+  .daily-rewards__days { display: flex; gap: var(--space-4); }
+  .daily-rewards__days span { width: 14px; height: 6px; border-radius: var(--radius-full); background: var(--color-border-default); }
+  .daily-rewards__days span.is-on { background: var(--color-icon-streak); }
+  .reward-row { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); white-space: nowrap; }
+  .free-player-btn { display: none; }
+  .free-player-btn.visible { display: inline-flex; }
+  .free-player-btn svg { width: 17px; height: 16px; }
+
+  /* ---- Player difficulty ---- */
+  .fun-fact { display: none; background: var(--color-bg-subtle); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  .fun-fact.visible { display: flex; }
+  .difficulty__cell { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: var(--space-12); }
+  .difficulty__cell + .difficulty__cell { border-left: 1px solid var(--color-border-subtle); }
+  .difficulty__name { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-link); overflow-wrap: anywhere; }
+  .difficulty__meta { font-size: 12px; line-height: 16px; font-weight: 500; }
+  .difficulty__meta--easy { color: var(--color-text-success); }
+  .difficulty__meta--hard { color: var(--color-text-danger); }
+
+  /* ---- Leaderboard ---- */
+  .lb-section { display: flex; flex-direction: column; gap: var(--space-8); }
+  .lb-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-8); }
+  .lb-title { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+  .lb-total { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+  .lb-controls { display: flex; flex-direction: column; gap: var(--space-8); }
+  .lb-select {
+    height: 36px; padding: 0 32px 0 var(--space-12); appearance: none; -webkit-appearance: none;
+    border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface) no-repeat right 10px center / 16px 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2354595D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    font-size: 13px; line-height: 18px; color: var(--color-text-primary); cursor: pointer;
+  }
+  .lb-select:focus-visible { outline: none; border-color: var(--color-border-focus); box-shadow: var(--focus-ring); }
+  .lb-select:disabled { color: var(--color-text-disabled); background-color: var(--color-bg-muted); cursor: default; }
+  .lb-list { display: flex; flex-direction: column; }
+  .lb-row { display: flex; align-items: center; gap: var(--space-8); padding: 6px var(--space-12) 6px var(--space-8); border-radius: var(--radius-md); font-size: 13px; line-height: 18px; }
+  .lb-row.lb-you { background: var(--color-bg-brand-subtle); }
+  .lb-rank {
+    position: relative; width: 28px; height: 28px; flex-shrink: 0; border-radius: var(--radius-full);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums;
+  }
+  .lb-rank img { position: absolute; left: 0; top: -2px; width: 28px; height: 28px; }
+  .lb-rank--medal span { position: relative; padding-top: 6px; color: #3D2B0D; }
+  .lb-rank--you { background: var(--color-bg-brand); color: var(--color-text-inverse); }
+  .lb-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-4); }
+  .lb-name-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-primary); text-decoration: none; cursor: pointer; }
   .lb-name-link:hover { text-decoration: underline; }
-  .fun-fact { font-size: 12px; color: var(--color-text-secondary); background: var(--color-bg-surface); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); padding: 8px 10px; display: none; }
-  .fun-fact.visible { display: block; }
-  .fun-fact strong { color: var(--text); }
-  .fun-fact-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-top: 6px; }
-  .fun-fact-label:first-child { margin-top: 0; }
-  .fun-fact-list { margin: 2px 0 0; padding-left: 18px; font-size: 12px; color: var(--color-text-secondary); }
-  .fun-fact-list li { margin-bottom: 2px; }
+  .lb-row.lb-you .lb-name-link { font-weight: 600; }
+  .lb-badge { width: 16px; height: 16px; flex-shrink: 0; display: block; }
+  .lb-score { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lb-row.lb-you .lb-score { color: var(--color-text-brand); }
+  .lb-divider { text-align: center; color: var(--color-text-disabled); font-size: 12px; line-height: 12px; margin: 2px 0; }
 
   /* Modals */
   .modal-overlay { position: fixed; inset: 0; background: rgba(32, 33, 34, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -503,16 +561,17 @@
 <div class="wrap">
 <div class="layout">
 
-  <div class="sidebar">
-    <div class="sidebar-title">Let's focus on players from...</div>
+  <aside class="sidebar">
+    <div class="sidebar-title overline">Let's focus on players from…</div>
     <div class="league-filter-wrap" id="leagueFilterWrap">
       <div class="league-list" id="leagueList"></div>
-      <button type="button" class="reset-btn" id="resetFilterBtn">Reset (show all)</button>
+      <div class="filter-hint">Pick at least 5 clubs to filter the game.</div>
+      <button type="button" class="btn btn--secondary btn--sm reset-btn" id="resetFilterBtn">Reset (show all)</button>
       <div class="league-filter-overlay" id="leagueFilterOverlay">
         <span>Filtering not possible in Easy Mode</span>
       </div>
     </div>
-  </div>
+  </aside>
 
   <main class="main">
 
@@ -555,13 +614,19 @@
 
     <div class="feedback-slot"><div class="feedback" id="feedback" role="status" aria-live="polite"></div></div>
 
+    <div class="daily-rewards" title="Play at least one guess on 5 days in a row to earn a free player (max 3)">
+      <img class="daily-rewards__icon" src="/assets/gift-3d.svg" width="26" height="26" alt="">
+      <div class="daily-rewards__days" id="rewardDays" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <span class="reward-row" id="rewardRow"></span>
+      <button type="button" class="btn btn--secondary btn--sm free-player-btn" id="freePlayerBtn" title="Reveal this player and count it as completed">Use free player <svg viewBox="0 0 22 20" fill="none" aria-hidden="true"><path d="M3.5 7.50001C2.83696 7.50001 2.20107 7.7634 1.73223 8.23224C1.26339 8.70108 1 9.33696 1 10C1 10.663 1.26339 11.2989 1.73223 11.7678C2.20107 12.2366 2.83696 12.5 3.5 12.5V14.1667C3.5 14.6087 3.67559 15.0326 3.98816 15.3452C4.30072 15.6577 4.72464 15.8333 5.16667 15.8333H16.8333C17.2754 15.8333 17.6993 15.6577 18.0118 15.3452C18.3244 15.0326 18.5 14.6087 18.5 14.1667V12.5C19.163 12.5 19.7989 12.2366 20.2678 11.7678C20.7366 11.2989 21 10.663 21 10C21 9.33696 20.7366 8.70108 20.2678 8.23224C19.7989 7.7634 19.163 7.50001 18.5 7.50001V5.83334C18.5 5.39131 18.3244 4.96739 18.0118 4.65483C17.6993 4.34227 17.2754 4.16667 16.8333 4.16667H5.16667C4.72464 4.16667 4.30072 4.34227 3.98816 4.65483C3.67559 4.96739 3.5 5.39131 3.5 5.83334V7.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.6667 4.16667V5.83334M12.6667 9.16667V10.8333M12.6667 14.1667V15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+
     <div class="easy-mode-row">
       <label class="easy-mode-toggle">
         <input type="checkbox" id="easyModeToggle" aria-label="Easy Mode" />
         <span class="easy-mode-slider"></span>
       </label>
       <span class="easy-mode-label">Easy Mode</span>
-      <button type="button" class="btn btn--ghost btn--sm free-player-btn" id="freePlayerBtn" title="Reveal this player and count it as completed">🎟️ Use free player</button>
     </div>
     <div class="turnstile-box" id="turnstileBox"></div>
   </div>
@@ -573,23 +638,27 @@
 
   </main>
 
-  <div class="leaderboard-panel">
-    <div class="scorebar">
-      <div>Current streak: <strong id="streak">0</strong></div>
-      <div class="lb-streak-legend" title="Longest streak badges">
-        <span>⚽3</span><span>🔥5</span><span>🌟7</span><span>🐐10</span>
+  <aside class="leaderboard-panel">
+    <section class="streak-panel">
+      <div class="streak-counter">
+        <span class="overline">Current streak</span>
+        <div class="streak-counter__value"><img id="streakIcon" src="/assets/ball-3d.svg" width="32" height="32" alt=""><strong id="streak">0</strong></div>
       </div>
-    </div>
-    <div class="reward-row" id="rewardRow" title="Play at least one guess on 5 days in a row to earn a free player (max 3)"></div>
+      <div class="streak-badges" id="streakBadges" title="Best streak badges"></div>
+    </section>
+
     <div class="fun-fact" id="funFact"></div>
-    <div class="lb-title">Leaderboard</div>
-    <div class="lb-controls">
-      <select id="lbLeagueSelect" class="lb-select"></select>
-      <select id="lbTeamSelect" class="lb-select"></select>
-    </div>
-    <div class="lb-list" id="lbList"></div>
-    <div id="lbYou"></div>
-  </div>
+
+    <section class="lb-section">
+      <div class="lb-head"><h2 class="lb-title">Leaderboard</h2><span class="lb-total" id="lbTotal"></span></div>
+      <div class="lb-controls">
+        <select id="lbLeagueSelect" class="lb-select" aria-label="League"></select>
+        <select id="lbTeamSelect" class="lb-select" aria-label="Team"></select>
+      </div>
+      <div class="lb-list" id="lbList"></div>
+      <div id="lbYou"></div>
+    </section>
+  </aside>
 
 </div>
 <div class="site-footer"><a href="/privacy.html">Privacy policy</a> · <a href="/terms.html">Terms</a> · <a href="mailto:info@disco.games">Contact</a></div>
@@ -674,13 +743,22 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 // League groupings — used to power the left-hand filter boxes and leaderboard dropdown.
 const LEAGUES = [
-  { id: "epl", name: "Premier League" },
-  { id: "laliga", name: "La Liga" },
-  { id: "seriea", name: "Serie A" },
-  { id: "bundesliga", name: "Bundesliga" },
-  { id: "ligue1", name: "Ligue 1" },
-  { id: "allsvenskan", name: "Allsvenskan" }
+  { id: "epl", name: "Premier League", flag: "gb-eng" },
+  { id: "laliga", name: "La Liga", flag: "es" },
+  { id: "seriea", name: "Serie A", flag: "it" },
+  { id: "bundesliga", name: "Bundesliga", flag: "de" },
+  { id: "ligue1", name: "Ligue 1", flag: "fr" },
+  { id: "allsvenskan", name: "Allsvenskan", flag: "se" }
 ];
+
+// Streak badge tiers (design: Streak). Earned = best streak reached the tier.
+const STREAK_TIERS = [
+  { n: 3, icon: '/assets/ball-3d.svg' },
+  { n: 5, icon: '/assets/flame-3d.svg' },
+  { n: 7, icon: '/assets/star-3d.svg' },
+  { n: 10, icon: '/assets/crown-3d.svg' }
+];
+const MEDALS = { 1: '/assets/medal-gold-3d.svg', 2: '/assets/medal-silver-3d.svg', 3: '/assets/medal-bronze-3d.svg' };
 
 // Time per round, in seconds. Keep in sync with c_round_seconds in submit_guess (SQL).
 const ROUND_SECONDS = 20;
@@ -748,6 +826,10 @@ const infoboxEl = document.getElementById('infobox');
 const infoboxName = document.getElementById('infoboxName');
 const careerTotalEl = document.getElementById('careerTotal');
 const rewardRow = document.getElementById('rewardRow');
+const rewardDaysEl = document.getElementById('rewardDays');
+const streakIconEl = document.getElementById('streakIcon');
+const streakBadgesEl = document.getElementById('streakBadges');
+const lbTotalEl = document.getElementById('lbTotal');
 const freePlayerBtn = document.getElementById('freePlayerBtn');
 
 // Profile modal elements
@@ -795,6 +877,40 @@ function initialsOf(name) {
   const first = parts[0].charAt(0);
   const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
   return (first + last).toUpperCase();
+}
+
+// Flag image (self-hosted flag-icons, MIT). Only 2-letter codes or our league codes.
+function flagImg(code, extraClass) {
+  const c = String(code || '').toLowerCase();
+  if (!/^[a-z]{2}(-[a-z]{3})?$/.test(c)) return `<span class="flag${extraClass ? ' ' + extraClass : ''}" aria-hidden="true"></span>`;
+  return `<img class="flag${extraClass ? ' ' + extraClass : ''}" src="/assets/flags/${c}.svg" width="20" height="14" alt="" loading="lazy">`;
+}
+
+const CHECK_SVG = '<svg class="checkbox__check" viewBox="0 0 12 12" fill="none"><path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const MIXED_SVG = '<svg class="checkbox__mixed" viewBox="0 0 12 12" fill="none"><path d="M3 6H9" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>';
+function checkboxHtml(state) {
+  const cls = state === 'checked' ? ' is-checked' : state === 'mixed' ? ' is-mixed' : '';
+  return `<span class="checkbox${cls}" aria-hidden="true">${CHECK_SVG}${MIXED_SVG}</span>`;
+}
+const CHEVRON_SVG = '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function tierFor(n) {
+  let t = null;
+  for (const tier of STREAK_TIERS) if (n >= tier.n) t = tier;
+  return t;
+}
+
+// Current streak number + icon, and the four badges based on the best streak
+function renderStreak() {
+  streakEl.textContent = String(streak);
+  const t = tierFor(streak);
+  streakIconEl.src = t ? t.icon : STREAK_TIERS[0].icon;
+  streakIconEl.classList.toggle('is-dim', !t);
+  const best = Math.max(currentLongestStreak || 0, streak);
+  streakBadgesEl.innerHTML = STREAK_TIERS.map(tier => {
+    const earned = best >= tier.n;
+    return `<span class="streak-badge${earned ? '' : ' is-locked'}" title="${earned ? 'Earned' : 'Locked'}: ${tier.n} in a row"><img src="${tier.icon}" width="22" height="22" alt="">${tier.n}</span>`;
+  }).join('');
 }
 
 // ---- FEEDBACK + GUESS STATE (design: Feedback, Guess input) ---------------
@@ -876,15 +992,15 @@ function updateUserBarUI() {
   userBar.classList.toggle('signed-in', signedIn);
   if (signedIn) {
     const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Player';
-    const flag = currentCountryCode ? countryCodeToFlag(currentCountryCode) + ' ' : '';
     userStatusText.textContent = 'Signed in as';
     userAvatarEl.textContent = initialsOf(label);
-    userNameEl.textContent = flag + label;
+    userNameEl.innerHTML = (currentCountryCode ? flagImg(currentCountryCode) : '') + `<span>${escapeHtml(label)}</span>`;
   } else {
     userStatusText.textContent = linkConflict
       ? 'That Google account already has a profile. Sign in with it to continue (progress from this guest session is not merged).'
       : "Playing as guest — progress won't be saved";
   }
+  renderStreak();
 }
 
 async function upsertProfile() {
@@ -1094,7 +1210,8 @@ const DAYS_PER_FREE_PLAYER = 5;
 
 function renderRewards() {
   const progress = playDays === 0 ? 0 : (playDays % DAYS_PER_FREE_PLAYER === 0 ? DAYS_PER_FREE_PLAYER : playDays % DAYS_PER_FREE_PLAYER);
-  rewardRow.textContent = `📅 ${progress}/${DAYS_PER_FREE_PLAYER} days · 🎟️ ${freePlayers} free player${freePlayers === 1 ? '' : 's'}`;
+  rewardRow.textContent = `${progress}/${DAYS_PER_FREE_PLAYER} days · ${freePlayers} free player${freePlayers === 1 ? '' : 's'}`;
+  Array.from(rewardDaysEl.children).forEach((dot, i) => dot.classList.toggle('is-on', i < progress));
   freePlayerBtn.classList.toggle('visible', !!currentUser && freePlayers > 0);
 }
 
@@ -1228,7 +1345,7 @@ function applyFilterChange() {
   clearInterval(timer);
   // Starting a new round abandons the current one, which resets the streak on the server too
   streak = 0;
-  streakEl.textContent = streak;
+  renderStreak();
   buildPool();
   startRound();
   renderFunFact();
@@ -1247,21 +1364,31 @@ function renderLeagueBoxes() {
     const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
     const done = leaguePlayers.filter(p => completed.has(p.id)).length;
     const total = leaguePlayers.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
     const clubs = clubsForLeague(l.id);
     const allSelected = clubs.length > 0 && clubs.every(c => selectedClubs.has(c.id));
     const someSelected = clubs.some(c => selectedClubs.has(c.id));
     const expanded = expandedLeagues.has(l.id);
+    const state = allSelected ? 'checked' : someSelected ? 'mixed' : '';
     return `
-      <div class="league-item">
-        <div class="league-row${allSelected ? ' active' : ''}${!allSelected && someSelected ? ' partial' : ''}" data-league="${l.id}">
-          <button type="button" class="league-arrow${expanded ? ' open' : ''}" data-league-arrow="${l.id}">▸</button>
-          <span class="league-row-name">${l.name}</span>
-          <span class="league-row-progress">${done} / ${total}</span>
+      <div class="league-item${expanded ? ' is-expanded' : ''}${allSelected || someSelected ? ' is-selected' : ''}">
+        <div class="league-head">
+          <div class="league-row${allSelected ? ' active' : ''}${!allSelected && someSelected ? ' partial' : ''}" data-league="${l.id}" role="checkbox" aria-checked="${allSelected ? 'true' : someSelected ? 'mixed' : 'false'}">
+            ${checkboxHtml(state)}
+            ${flagImg(l.flag)}
+            <span class="league-row-name">${l.name}</span>
+            <span class="league-row-progress">${done}/${total}</span>
+            <button type="button" class="league-arrow${expanded ? ' open' : ''}" data-league-arrow="${l.id}" aria-label="Show clubs" aria-expanded="${expanded}">${CHEVRON_SVG}</button>
+          </div>
+          <div class="league-meter" aria-hidden="true"><div style="width:${pct}%"></div></div>
         </div>
         <div class="league-clubs${expanded ? ' open' : ''}" data-clubs-for="${l.id}">
-          ${clubs.map(c => `
-            <div class="club-box${selectedClubs.has(c.id) ? ' selected' : ''}" data-club="${c.id}">${c.name}</div>
-          `).join('')}
+          ${clubs.map(c => {
+            const cp = leaguePlayers.filter(p => p.clubId === c.id);
+            const cd = cp.filter(p => completed.has(p.id)).length;
+            const sel = selectedClubs.has(c.id);
+            return `<div class="club-box${sel ? ' selected' : ''}" data-club="${escapeHtml(c.id)}" role="checkbox" aria-checked="${sel}">${checkboxHtml(sel ? 'checked' : '')}<span class="club-box__name">${escapeText(c.name)}</span><span class="club-box__count">${cd}/${cp.length}</span></div>`;
+          }).join('')}
         </div>
       </div>
   `;
@@ -1365,16 +1492,10 @@ async function renderFunFact() {
 
   let html = '';
   if (data.easiest) {
-    html += `
-      <div class="fun-fact-label">Easiest player:</div>
-      <ul class="fun-fact-list"><li><strong>${escapeHtml(data.easiest.display_name)}</strong>, ${escapeHtml(data.easiest.club_name)}</li></ul>
-    `;
+    html += `<div class="difficulty__cell"><span class="overline">Easiest player</span><span class="difficulty__name">${escapeHtml(data.easiest.display_name)}</span><span class="difficulty__meta difficulty__meta--easy">${escapeHtml(data.easiest.club_name)}</span></div>`;
   }
   if (data.hardest) {
-    html += `
-      <div class="fun-fact-label">Hardest player:</div>
-      <ul class="fun-fact-list"><li><strong>${escapeHtml(data.hardest.display_name)}</strong>, ${escapeHtml(data.hardest.club_name)}</li></ul>
-    `;
+    html += `<div class="difficulty__cell"><span class="overline">Hardest player</span><span class="difficulty__name">${escapeHtml(data.hardest.display_name)}</span><span class="difficulty__meta difficulty__meta--hard">${escapeHtml(data.hardest.club_name)}</span></div>`;
   }
 
   if (!html) {
@@ -1469,40 +1590,39 @@ function populateTeamSelect() {
     Array.from(clubsMap.entries()).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
 }
 
+function lbRowHtml(e, opts) {
+  const isMe = !!(currentUser && e.userId === currentUser.id);
+  const pinned = !!(opts && opts.pinned);
+  let rank;
+  if (pinned) rank = `<span class="lb-rank lb-rank--you">${e.rank}</span>`;
+  else if (MEDALS[e.rank]) rank = `<span class="lb-rank lb-rank--medal"><img src="${MEDALS[e.rank]}" width="28" height="28" alt=""><span>${e.rank}</span></span>`;
+  else rank = `<span class="lb-rank">${e.rank}</span>`;
+  const tier = tierFor(e.longestStreak);
+  const badge = tier ? `<img class="lb-badge" src="${tier.icon}" width="16" height="16" alt="" title="Best streak ${e.longestStreak}">` : '';
+  return `
+    <div class="lb-row${isMe ? ' lb-you' : ''}">
+      ${rank}
+      ${flagImg(e.country)}
+      <span class="lb-name">
+        <a href="#" class="lb-name-link" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}">${escapeHtml(e.name)}</a>
+        ${badge}
+      </span>
+      <span class="lb-score">${Number(e.score).toLocaleString('en-US')}</span>
+    </div>`;
+}
+
 async function renderLeaderboard() {
   const leagueId = lbLeagueSelect.value;
   const teamId = lbTeamSelect.value;
   const { total, entries, me } = await generateLeaderboard(leagueId, teamId);
   const top = entries;
+  lbTotalEl.textContent = total ? `of ${Number(total).toLocaleString('en-US')} players` : '';
 
-  lbListEl.innerHTML = top.map((e) => {
-    const rankClass = e.rank === 1 ? ' lb-rank-gold' : e.rank === 2 ? ' lb-rank-silver' : e.rank === 3 ? ' lb-rank-bronze' : '';
-    return `
-      <div class="lb-row${currentUser && e.userId === currentUser.id ? ' lb-you' : ''}">
-        <span class="lb-rank${rankClass}">${e.rank}</span>
-        <span class="lb-name">
-          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}">${countryCodeToFlag(e.country)} ${escapeHtml(e.name)}${currentUser && e.userId === currentUser.id ? ' (you)' : ''}</a>
-        </span>
-        ${e.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(e.longestStreak)}</span>` : ''}
-        <span class="lb-score">${e.score} / ${total}</span>
-      </div>
-    `;
-  }).join('');
+  lbListEl.innerHTML = top.map(e => lbRowHtml(e)).join('');
 
   const youInTop = currentUser && me && top.some(e => e.userId === me.userId);
   if (currentUser && me && !youInTop) {
-    const youRankClass = me.rank === 1 ? ' lb-rank-gold' : me.rank === 2 ? ' lb-rank-silver' : me.rank === 3 ? ' lb-rank-bronze' : '';
-    lbYouEl.innerHTML = `
-      <div class="lb-divider">···</div>
-      <div class="lb-row lb-you">
-        <span class="lb-rank${youRankClass}">${me.rank}</span>
-        <span class="lb-name">
-          <a href="#" class="lb-name-link lb-name-text" data-user-id="${escapeHtml(me.userId)}" data-username="${escapeHtml(me.name)}" data-country="${escapeHtml(me.country || '')}">${countryCodeToFlag(me.country)} ${escapeHtml(me.name)} (you)</a>
-        </span>
-        ${me.longestStreak >= 3 ? `<span class="lb-streak-emoji">${streakEmoji(me.longestStreak)}</span>` : ''}
-        <span class="lb-score">${me.score} / ${total}</span>
-      </div>
-    `;
+    lbYouEl.innerHTML = `<div class="lb-divider">···</div>` + lbRowHtml(me, { pinned: true });
   } else {
     lbYouEl.innerHTML = '';
   }
@@ -1785,12 +1905,13 @@ function endRound(result) {
 
   if (status === 'correct') {
     streak = (typeof result.streak === 'number') ? result.streak : streak + 1;
-    streakEl.textContent = streak;
+    renderStreak();
     if (typeof result.longest_streak === 'number') {
       currentLongestStreak = Math.max(currentLongestStreak, result.longest_streak);
     } else if (!currentUser) {
       currentLongestStreak = Math.max(currentLongestStreak, streak);
     }
+    renderStreak();
     setFeedback('correct', `Correct — ${result.display_name}`,
       `+1 · ${streak} in a row` + (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
     setGuessState('correct');
@@ -1804,7 +1925,7 @@ function endRound(result) {
   } else if (status === 'revealed') {
     // Free player used: counts as completed, the current streak is kept
     applyRewardResult(result);
-    if (typeof result.streak === 'number') { streak = result.streak; streakEl.textContent = streak; }
+    if (typeof result.streak === 'number') { streak = result.streak; renderStreak(); }
     setFeedback('correct', `Free player — ${result.display_name}`, `Streak kept · ${streak} in a row`);
     setGuessState('correct');
     revealName(result.display_name);
@@ -1819,7 +1940,7 @@ function endRound(result) {
     updateProgressUI();
   } else if (status === 'rate_limited' || status === 'error' || status === 'guest_failed' || status === 'auth_required') {
     streak = 0;
-    streakEl.textContent = streak;
+    renderStreak();
     setFeedback('wrong', status === 'rate_limited'
       ? 'Too many wrong guesses — wait a moment.'
       : status === 'guest_failed'
@@ -1831,7 +1952,7 @@ function endRound(result) {
   } else {
     // 'wrong' or 'timeout'
     streak = 0;
-    streakEl.textContent = streak;
+    renderStreak();
     setFeedback('wrong', status === 'timeout' ? "Time's up" : 'Not quite',
       'Streak reset' + (currentLongestStreak > 0 ? ` · best ${currentLongestStreak}` : '') +
       (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
@@ -1852,7 +1973,7 @@ function skipRound() {
   guessInput.disabled = true;
   renderSuggestions([]);
   streak = 0;
-  streakEl.textContent = streak;
+  renderStreak();
   pool.unshift(current);
   startRound();
 }
