@@ -480,60 +480,102 @@
   .lb-row.lb-you .lb-score { color: var(--color-text-brand); }
   .lb-divider { text-align: center; color: var(--color-text-disabled); font-size: 12px; line-height: 12px; margin: 2px 0; }
 
-  /* Modals */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(32, 33, 34, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  /* ---- Modals (profile + mini profile) ---- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(32, 33, 34, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: var(--space-20); }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--card); border-radius: var(--radius-lg); width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto; position: relative; box-shadow: var(--elevation-3); }
-  .modal-close { position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 22px; line-height: 1; color: var(--color-text-tertiary); cursor: pointer; padding: 4px; width: auto; }
-  .modal-close:hover { color: var(--text); }
-  .profile-header { display: flex; align-items: center; gap: 14px; padding: 24px 20px 16px; border-bottom: 1px solid var(--color-border-subtle); }
-  .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--color-bg-brand-subtle); color: var(--color-text-brand); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; flex-shrink: 0; }
-  .profile-name { font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 600; }
-  .profile-email { font-size: 13px; color: var(--color-text-tertiary); }
-  .profile-section { padding: 16px 20px; border-bottom: 1px solid var(--color-border-subtle); }
-  .profile-section:last-of-type { border-bottom: none; }
-  .profile-section-title { font-size: 11px; line-height: 16px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
-  .profile-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; border-bottom: 1px solid var(--color-border-subtle); }
-  .profile-stat-row:last-child { border-bottom: none; }
-  .profile-stat-row strong { font-variant-numeric: tabular-nums; }
-  .profile-league-list { margin-top: 4px; max-height: 160px; overflow-y: auto; }
-  .profile-league-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--color-text-secondary); padding: 5px 0; }
-  .profile-league-row strong { color: var(--text); font-variant-numeric: tabular-nums; }
-  .profile-setting-row { display: flex; flex-direction: column; gap: 8px; }
-  .profile-setting-row label { font-size: 13px; color: var(--color-text-secondary); font-weight: 600; }
-  .profile-setting-row .profile-input-row { display: flex; gap: 8px; }
-  .profile-setting-row input[type="text"] { flex: 1; padding: 8px 10px; font-size: 14px; border: 1.5px solid var(--color-border-default); border-radius: var(--radius-md); outline: none; }
-  .profile-setting-row input[type="text"]:focus { border-color: var(--color-border-focus); box-shadow: var(--focus-ring); }
-  .profile-setting-row button { padding: 0 14px; height: 36px; font-size: 13px; font-weight: 600; background: var(--color-bg-brand); color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer; }
-  .profile-save-msg { font-size: 12px; color: var(--color-text-brand); margin-top: 6px; min-height: 16px; }
-  .profile-footer { padding: 16px 20px 20px; }
-  .profile-signout-btn { width: 100%; background: #fff; color: var(--color-text-danger); border: 1px solid var(--color-border-danger); font-weight: 600; font-size: 14px; padding: 10px; border-radius: var(--radius-md); cursor: pointer; }
-  .profile-signout-btn:hover { background: var(--color-bg-danger); }
-  .profile-delete-link { display: block; margin: 12px auto 0; background: none; border: none; color: var(--color-text-tertiary); font-size: 12px; font-weight: 500; text-decoration: underline; padding: 4px; width: auto; cursor: pointer; }
+  .modal {
+    background: var(--color-bg-surface); border-radius: var(--radius-lg); width: 100%; max-width: 440px;
+    max-height: 88vh; overflow-y: auto; position: relative; box-shadow: var(--elevation-3);
+  }
+  .modal-close {
+    position: absolute; top: var(--space-12); right: var(--space-12); width: 32px; height: 32px; padding: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: none; border: none; border-radius: var(--radius-md); color: var(--color-text-secondary); cursor: pointer;
+  }
+  .modal-close svg { width: 20px; height: 20px; }
+  .modal-close:hover { background: var(--color-bg-muted); color: var(--color-text-primary); }
+  .modal-close:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  .avatar--m { width: 40px; height: 40px; font-size: 15px; line-height: 20px; font-weight: 600; }
+  .avatar--l { width: 64px; height: 64px; font-size: 22px; line-height: 28px; font-weight: 600; }
+  .profile-header { display: flex; align-items: center; gap: var(--space-16); padding: var(--space-24) var(--space-24) var(--space-20); border-bottom: 1px solid var(--color-border-subtle); }
+  .profile-header > div:last-child { min-width: 0; }
+  .profile-name { display: flex; align-items: center; gap: var(--space-8); font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 600; }
+  .profile-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-email { font-size: 13px; line-height: 18px; color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-section { padding: var(--space-20) var(--space-24); border-bottom: 1px solid var(--color-border-subtle); }
+  .profile-section-title { margin-bottom: var(--space-12); }
+  .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-bg-subtle); }
+  .profile-stat { display: flex; flex-direction: column; gap: 2px; padding: var(--space-12); min-width: 0; }
+  .profile-stat + .profile-stat { border-left: 1px solid var(--color-border-subtle); }
+  .profile-stat strong { display: flex; align-items: center; gap: var(--space-4); font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .profile-stat strong img { width: 20px; height: 20px; }
+  .profile-stat .overline { white-space: nowrap; }
+  .profile-league-list { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-16); }
+  .league-progress { display: flex; flex-direction: column; gap: 6px; }
+  .league-progress__row { display: flex; align-items: center; gap: var(--space-8); font-size: 13px; line-height: 18px; }
+  .league-progress__name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .league-progress__count { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .league-progress .league-meter div { background: var(--color-bg-brand); }
+  .profile-setting-row { display: flex; flex-direction: column; gap: var(--space-8); }
+  .profile-setting-row label { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-secondary); }
+  .profile-input-row { display: flex; gap: var(--space-8); }
+  .text-input {
+    flex: 1; min-width: 0; height: 40px; padding: 0 var(--space-12);
+    border: 1.5px solid var(--color-border-default); border-radius: var(--radius-md); outline: none;
+    font-size: 14px; line-height: 20px; color: var(--color-text-primary); background: var(--color-bg-surface);
+  }
+  .text-input:focus { border-color: var(--color-border-focus); box-shadow: var(--focus-ring); }
+  .profile-save-msg { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-brand); min-height: 16px; }
+  .profile-footer { padding: var(--space-20) var(--space-24) var(--space-24); display: flex; flex-direction: column; align-items: stretch; }
+  .profile-signout-btn { width: 100%; }
+  .profile-delete-link { align-self: center; margin-top: var(--space-12); background: none; border: none; color: var(--color-text-tertiary); font-size: 12px; line-height: 16px; font-weight: 500; text-decoration: underline; padding: 4px; cursor: pointer; }
   .profile-delete-link:hover { color: var(--color-text-danger); }
-  .profile-delete-confirm { display: none; margin-top: 12px; padding: 12px; border: 1px solid var(--color-border-danger); border-radius: var(--radius-md); background: var(--color-bg-danger); font-size: 13px; color: var(--color-text-secondary); }
+  .profile-delete-confirm { display: none; margin-top: var(--space-12); padding: var(--space-12); border: 1px solid var(--color-border-danger); border-radius: var(--radius-md); background: var(--color-bg-danger); font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
   .profile-delete-confirm.open { display: block; }
-  .profile-delete-confirm p { margin: 0 0 10px; }
-  .profile-delete-confirm label { display: block; font-weight: 600; margin-bottom: 6px; }
-  .profile-delete-confirm input[type="text"] { width: 100%; padding: 8px 10px; font-size: 14px; border: 1.5px solid var(--color-border-default); border-radius: var(--radius-md); }
-  .profile-delete-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .profile-delete-actions button { height: 36px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; }
-  .profile-delete-actions button:disabled { opacity: 0.5; cursor: default; }
-  .profile-delete-cancel { flex: 1; background: #fff; color: var(--color-text-secondary); border: 1px solid var(--border); padding: 8px; font-size: 13px; }
-  .profile-delete-confirm-btn { flex: 1; background: var(--color-border-danger); color: #fff; border: none; padding: 8px; font-size: 13px; }
+  .profile-delete-confirm p { margin: 0 0 var(--space-8); }
+  .profile-delete-confirm label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--color-text-primary); }
+  .profile-delete-confirm .text-input { width: 100%; }
+  .profile-delete-confirm .text-input:focus { border-color: var(--color-border-danger); box-shadow: 0 0 0 3px rgba(201,60,60,0.2); }
+  .profile-delete-actions { display: flex; gap: var(--space-8); margin-top: var(--space-12); }
+  .profile-delete-actions .btn { flex: 1; }
+  .btn--danger { background: var(--color-border-danger); color: var(--color-text-inverse); }
+  .btn--danger:hover:not(:disabled) { background: var(--color-text-danger); }
+  .btn--danger:disabled { background: var(--color-bg-muted); color: var(--color-text-disabled); cursor: default; }
 
-  .mini-profile-overlay { position: fixed; inset: 0; background: rgba(32,33,34,0.4); display: none; align-items: flex-start; justify-content: flex-end; z-index: 1000; padding: 90px 40px 20px 20px; }
+  .mini-profile-overlay { position: fixed; inset: 0; background: rgba(32,33,34,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; padding: var(--space-20); }
   .mini-profile-overlay.open { display: flex; }
-  .mini-profile { background: var(--card); border-radius: var(--radius-lg); width: 100%; max-width: 280px; padding: 16px; position: relative; box-shadow: var(--elevation-3); }
-  .mini-profile-close { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 18px; line-height: 1; color: var(--color-text-tertiary); cursor: pointer; padding: 2px; width: auto; }
-  .mini-profile-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .mini-profile-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--color-bg-brand-subtle); color: var(--color-text-brand); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; flex-shrink: 0; }
-  .mini-profile-name { font-size: 15px; font-weight: 600; }
-  .mini-profile-leagues-title { font-size: 11px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-  .mini-profile-league-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--color-border-subtle); }
-  .mini-profile-league-row:last-child { border-bottom: none; }
-  .mini-profile-league-row strong { font-variant-numeric: tabular-nums; }
-  .mini-profile-empty { font-size: 13px; color: var(--color-text-tertiary); }
+  .mini-profile { background: var(--color-bg-surface); border-radius: var(--radius-lg); width: 100%; max-width: 320px; padding: var(--space-20); position: relative; box-shadow: var(--elevation-3); }
+  .mini-profile-close { top: var(--space-8); right: var(--space-8); }
+  .mini-profile-header { display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-16); padding-right: var(--space-32); }
+  .mini-profile-name { display: flex; align-items: center; gap: var(--space-8); min-width: 0; font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 600; }
+  .mini-profile-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-profile-leagues { display: flex; flex-direction: column; gap: var(--space-12); }
+  .mini-profile-leagues .overline { margin-bottom: -4px; }
+  .mini-profile-empty { font-size: 13px; line-height: 18px; color: var(--color-text-tertiary); }
+
+  /* ---- Mobile: collapsible league filter ---- */
+  .sidebar-toggle { display: none; }
+  @media (max-width: 1099px) {
+    .sidebar-toggle { display: inline-flex; align-self: flex-start; }
+    .sidebar .sidebar-title { display: none; }
+    .sidebar.is-collapsed .league-filter-wrap { display: none; }
+    .league-list { max-height: none; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding-top: var(--space-16); }
+    .layout { gap: var(--space-20); }
+    .guess-form { gap: var(--space-8); }
+    .guess-form .btn--primary { padding: 0 var(--space-12); }
+    .daily-rewards { gap: var(--space-8); }
+    .free-player-btn { margin-left: 0; }
+    .lb-select { height: 40px; }
+    .club-box { padding-top: 10px; padding-bottom: 10px; }
+    .league-head { padding-top: 12px; padding-bottom: 12px; }
+    .profile-header, .profile-section, .profile-footer { padding-left: var(--space-20); padding-right: var(--space-20); }
+    .profile-stat strong { font-size: 18px; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal { max-width: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 92vh; }
+  }
 
   .site-footer { margin-top: var(--space-32); text-align: center; font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
   .site-footer a { color: var(--color-text-secondary); }
@@ -561,7 +603,8 @@
 <div class="wrap">
 <div class="layout">
 
-  <aside class="sidebar">
+  <aside class="sidebar is-collapsed" id="sidebar">
+    <button type="button" class="btn btn--secondary btn--sm sidebar-toggle" id="sidebarToggle" aria-expanded="false" aria-controls="leagueFilterWrap"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M18.3333 2.5H1.66667L8.33334 10.3833V15.8333L11.6667 17.5V10.3833L18.3333 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="sidebarToggleLabel">Filter leagues</span></button>
     <div class="sidebar-title overline">Let's focus on players from…</div>
     <div class="league-filter-wrap" id="leagueFilterWrap">
       <div class="league-list" id="leagueList"></div>
@@ -666,11 +709,11 @@
 
 <!-- ---- PROFILE MODAL ---- -->
 <div class="modal-overlay" id="profileModalOverlay">
-  <div class="modal" id="profileModal">
-    <button type="button" class="modal-close" id="profileModalClose">&times;</button>
+  <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileName">
+    <button type="button" class="modal-close" id="profileModalClose" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
     <div class="profile-header">
-      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div class="avatar avatar--l" id="profileAvatar">?</div>
       <div>
         <div class="profile-name" id="profileName">—</div>
         <div class="profile-email" id="profileEmail">—</div>
@@ -678,46 +721,39 @@
     </div>
 
     <div class="profile-section">
-      <div class="profile-section-title">Statistics</div>
-      <div class="profile-stat-row">
-        <span>Total progress</span>
-        <strong id="profileTotalProgress">0 / 0</strong>
-      </div>
-      <div class="profile-stat-row">
-        <span>Longest streak</span>
-        <strong id="profileLongestStreak">0</strong>
-      </div>
-      <div class="profile-stat-row">
-        <span>Leaderboard rank (worldwide)</span>
-        <strong id="profileRank">—</strong>
+      <div class="profile-section-title overline">Statistics</div>
+      <div class="profile-stats">
+        <div class="profile-stat"><span class="overline">Found</span><strong id="profileTotalProgress">0 / 0</strong></div>
+        <div class="profile-stat"><span class="overline">Best streak</span><strong id="profileLongestStreak">0</strong></div>
+        <div class="profile-stat"><span class="overline">Rank</span><strong id="profileRank">—</strong></div>
       </div>
       <div class="profile-league-list" id="profileLeagueList"></div>
     </div>
 
     <div class="profile-section">
-      <div class="profile-section-title">Settings</div>
+      <div class="profile-section-title overline">Settings</div>
       <div class="profile-setting-row">
         <label for="profileUsernameInput">Display name (shown on leaderboard)</label>
         <div class="profile-input-row">
-          <input type="text" id="profileUsernameInput" placeholder="Your name" maxlength="40" />
-          <button type="button" id="profileSaveNameBtn">Save</button>
+          <input type="text" class="text-input" id="profileUsernameInput" placeholder="Your name" maxlength="40" />
+          <button type="button" class="btn btn--primary" id="profileSaveNameBtn">Save</button>
         </div>
         <div class="profile-save-msg" id="profileSaveMsg"></div>
       </div>
     </div>
 
     <div class="profile-footer">
-      <button type="button" class="profile-signout-btn" id="profileSignOutBtn">Sign out</button>
+      <button type="button" class="btn btn--secondary profile-signout-btn" id="profileSignOutBtn"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V4.16667C2.5 3.72464 2.67559 3.30072 2.98816 2.98816C3.30072 2.67559 3.72464 2.5 4.16667 2.5H7.5M13.3333 14.1667L17.5 10M17.5 10L13.3333 5.83333M17.5 10H7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign out</button>
       <button type="button" class="profile-delete-link" id="profileDeleteBtn">Delete account</button>
       <div class="profile-delete-confirm" id="profileDeleteConfirm">
         <p>This permanently deletes your account, your progress and your leaderboard entry. It cannot be undone.</p>
         <label for="profileDeleteInput">Type DELETE to confirm</label>
-        <input type="text" id="profileDeleteInput" autocomplete="off" />
+        <input type="text" class="text-input" id="profileDeleteInput" autocomplete="off" />
         <div class="profile-delete-actions">
-          <button type="button" class="profile-delete-cancel" id="profileDeleteCancel">Cancel</button>
-          <button type="button" class="profile-delete-confirm-btn" id="profileDeleteConfirmBtn" disabled>Delete my account</button>
+          <button type="button" class="btn btn--secondary profile-delete-cancel" id="profileDeleteCancel">Cancel</button>
+          <button type="button" class="btn btn--danger profile-delete-confirm-btn" id="profileDeleteConfirmBtn" disabled>Delete my account</button>
         </div>
-        <div class="profile-save-msg" id="profileDeleteMsg" style="color: var(--wrong);"></div>
+        <div class="profile-save-msg" id="profileDeleteMsg" style="color: var(--color-text-danger);"></div>
       </div>
     </div>
   </div>
@@ -725,10 +761,10 @@
 
 <!-- ---- MINI PROFILE POPUP (leaderboard) ---- -->
 <div class="mini-profile-overlay" id="miniProfileOverlay">
-  <div class="mini-profile" id="miniProfile">
-    <button type="button" class="mini-profile-close" id="miniProfileClose">&times;</button>
+  <div class="mini-profile" id="miniProfile" role="dialog" aria-modal="true" aria-labelledby="miniProfileName">
+    <button type="button" class="modal-close mini-profile-close" id="miniProfileClose" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="mini-profile-header">
-      <div class="mini-profile-avatar" id="miniProfileAvatar">?</div>
+      <div class="avatar avatar--m" id="miniProfileAvatar">?</div>
       <div class="mini-profile-name" id="miniProfileName">—</div>
     </div>
     <div class="mini-profile-leagues" id="miniProfileLeagues"></div>
@@ -830,6 +866,9 @@ const rewardDaysEl = document.getElementById('rewardDays');
 const streakIconEl = document.getElementById('streakIcon');
 const streakBadgesEl = document.getElementById('streakBadges');
 const lbTotalEl = document.getElementById('lbTotal');
+const sidebarEl = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarToggleLabel = document.getElementById('sidebarToggleLabel');
 const freePlayerBtn = document.getElementById('freePlayerBtn');
 
 // Profile modal elements
@@ -893,6 +932,18 @@ function checkboxHtml(state) {
   return `<span class="checkbox${cls}" aria-hidden="true">${CHECK_SVG}${MIXED_SVG}</span>`;
 }
 const CHEVRON_SVG = '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function nameWithFlag(code, name) {
+  return (code && /^[A-Za-z]{2}$/.test(code) ? flagImg(code) : '') + `<span>${escapeHtml(name)}</span>`;
+}
+
+function leagueProgressHtml(l, done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  return `<div class="league-progress">
+    <div class="league-progress__row">${flagImg(l.flag)}<span class="league-progress__name">${l.name}</span><span class="league-progress__count">${done}/${total} · ${pct}%</span></div>
+    <div class="league-meter" aria-hidden="true"><div style="width:${pct}%"></div></div>
+  </div>`;
+}
 
 function tierFor(n) {
   let t = null;
@@ -1360,6 +1411,7 @@ function clubsForLeague(leagueId) {
 }
 
 function renderLeagueBoxes() {
+  if (typeof updateSidebarToggle === 'function') updateSidebarToggle();
   leagueListEl.innerHTML = LEAGUES.map(l => {
     const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
     const done = leaguePlayers.filter(p => completed.has(p.id)).length;
@@ -1428,6 +1480,15 @@ leagueListEl.addEventListener('click', (e) => {
     renderLeagueBoxes();
     applyFilterChange();
   }
+});
+
+function updateSidebarToggle() {
+  const n = effectiveSelectedClubs().size;
+  sidebarToggleLabel.textContent = n ? `Filter leagues · ${n} clubs` : 'Filter leagues';
+}
+sidebarToggle.addEventListener('click', () => {
+  const collapsed = sidebarEl.classList.toggle('is-collapsed');
+  sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
 });
 
 resetFilterBtn.addEventListener('click', () => {
@@ -1518,15 +1579,15 @@ async function getUserTopLeagues(userId) {
     if (leaguePlayers.length === 0) return null;
     const done = leaguePlayers.filter(p => completedIds.has(p.id)).length;
     if (done === 0) return null;
-    return { name: l.name, done, total: leaguePlayers.length, pct: done / leaguePlayers.length };
+    return { league: l, name: l.name, done, total: leaguePlayers.length, pct: done / leaguePlayers.length };
   }).filter(Boolean);
   stats.sort((a, b) => b.pct - a.pct);
   return stats.slice(0, 3);
 }
 
 async function openMiniProfile(userId, username, country) {
-  miniProfileAvatar.textContent = (username || '?').charAt(0).toUpperCase();
-  miniProfileName.textContent = `${countryCodeToFlag(country)} ${username}`.trim();
+  miniProfileAvatar.textContent = initialsOf(username);
+  miniProfileName.innerHTML = nameWithFlag(country, username || 'Player');
   miniProfileLeagues.innerHTML = '<div class="mini-profile-empty">Loading…</div>';
   miniProfileOverlay.classList.add('open');
 
@@ -1536,13 +1597,8 @@ async function openMiniProfile(userId, username, country) {
     return;
   }
   miniProfileLeagues.innerHTML =
-    '<div class="mini-profile-leagues-title">Top leagues</div>' +
-    topLeagues.map(s => `
-      <div class="mini-profile-league-row">
-        <span>${s.name}</span>
-        <strong>${Math.round(s.pct * 100)}% (${s.done}/${s.total})</strong>
-      </div>
-    `).join('');
+    '<span class="overline">Top leagues</span>' +
+    topLeagues.map(s => leagueProgressHtml(s.league, s.done, s.total)).join('');
 }
 
 function closeMiniProfile() {
@@ -1648,6 +1704,11 @@ function closeProfileModal() {
 }
 
 viewProfileBtn.addEventListener('click', openProfileModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (miniProfileOverlay.classList.contains('open')) closeMiniProfile();
+  else if (profileModalOverlay.classList.contains('open')) closeProfileModal();
+});
 profileModalClose.addEventListener('click', closeProfileModal);
 profileModalOverlay.addEventListener('click', (e) => {
   if (e.target === profileModalOverlay) closeProfileModal();
@@ -1655,8 +1716,8 @@ profileModalOverlay.addEventListener('click', (e) => {
 
 async function populateProfileModal() {
   const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Player';
-  profileAvatar.textContent = label.charAt(0).toUpperCase();
-  profileName.textContent = `${countryCodeToFlag(currentCountryCode)} ${label}`.trim();
+  profileAvatar.textContent = initialsOf(label);
+  profileName.innerHTML = nameWithFlag(currentCountryCode, label);
   profileEmail.textContent = currentUser.email || '';
   profileUsernameInput.value = label;
   profileSaveMsg.textContent = '';
@@ -1664,19 +1725,16 @@ async function populateProfileModal() {
   // Total progress across all real players currently in the database
   const totalDone = allPlayers.filter(p => completed.has(p.id)).length;
   profileTotalProgress.textContent = `${totalDone} / ${allPlayers.length}`;
-  document.getElementById('profileLongestStreak').textContent = currentLongestStreak;
+  const bestTier = tierFor(currentLongestStreak);
+  document.getElementById('profileLongestStreak').innerHTML =
+    (bestTier ? `<img src="${bestTier.icon}" width="20" height="20" alt="">` : '') + escapeHtml(currentLongestStreak);
 
   // Per-league breakdown (leagues that actually have players)
   const activeLeagues = LEAGUES.filter(l => allPlayers.some(p => p.leagueId === l.id));
   profileLeagueList.innerHTML = activeLeagues.map(l => {
     const leaguePlayers = allPlayers.filter(p => p.leagueId === l.id);
     const done = leaguePlayers.filter(p => completed.has(p.id)).length;
-    return `
-      <div class="profile-league-row">
-        <span>${l.name}</span>
-        <strong>${done} / ${leaguePlayers.length}</strong>
-      </div>
-    `;
+    return leagueProgressHtml(l, done, leaguePlayers.length);
   }).join('');
 
   // Worldwide leaderboard rank
@@ -1696,8 +1754,8 @@ profileSaveNameBtn.addEventListener('click', async () => {
       .eq('user_id', currentUser.id);
     if (error) throw error;
     currentUsername = newName;
-    profileName.textContent = newName;
-    profileAvatar.textContent = newName.charAt(0).toUpperCase();
+    profileName.innerHTML = nameWithFlag(currentCountryCode, newName);
+    profileAvatar.textContent = initialsOf(newName);
     updateUserBarUI();
     await renderLeaderboard();
     profileSaveMsg.textContent = 'Saved!';
