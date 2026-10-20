@@ -643,6 +643,12 @@
   .infobox { border-radius: 14px; }
   .infobox__title { padding: var(--space-24) var(--space-20) var(--space-16); gap: 6px; min-height: 64px; }
   .infobox__name { font-size: 32px; line-height: 40px; }
+  .infobox__title { padding: var(--space-20) var(--space-20) var(--space-16); min-height: 0; }
+  .infobox__heading { margin: 0; font-family: var(--font-display); font-size: 24px; line-height: 32px; font-weight: 600; text-align: center; }
+  .infobox__eyebrow { display: none; }
+  .infobox.is-revealed .infobox__eyebrow { display: block; }
+  .infobox.is-revealed .infobox__heading { display: none; }
+  .infobox__section { height: 6px; padding: 0; }
 
   /* Play card */
   .play-card { padding: var(--space-20); }
@@ -871,10 +877,11 @@
     <div id="gameArea" style="display:none;">
       <article class="infobox" id="infobox">
         <div class="infobox__title">
-          <span class="infobox__eyebrow" id="infoboxEyebrow">Mystery player</span>
+          <span class="infobox__eyebrow" id="infoboxEyebrow"></span>
           <p class="infobox__name" id="infoboxName"></p>
+          <h2 class="infobox__heading">Senior career*</h2>
         </div>
-        <div class="infobox__section">Senior career*</div>
+        <div class="infobox__section" aria-hidden="true"></div>
         <table class="career-table">
           <thead><tr><th>Years</th><th>Team</th><th>Apps (Gls)</th></tr></thead>
           <tbody id="rows"></tbody>
@@ -2260,7 +2267,7 @@ function startRound() {
   setGuessState(null);
   infoboxEl.classList.remove('is-revealed');
   infoboxName.textContent = '';
-  infoboxEyebrow.textContent = 'Mystery player';
+  infoboxEyebrow.textContent = '';
   nextBtnLabel.textContent = 'Next';
   resultTimer = null;
   guessInput.value = '';
