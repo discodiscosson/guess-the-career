@@ -2271,6 +2271,7 @@ function startRound() {
   nextBtnLabel.textContent = 'Next';
   resultTimer = null;
   guessInput.value = '';
+  guessInput.placeholder = "Type a player's name…";
   guessInput.disabled = false;
   renderSuggestions([]);
   renderRewards();
@@ -2360,9 +2361,9 @@ function endRound(result) {
     // 'wrong' or 'timeout'
     streak = 0;
     renderStreak();
-    setFeedback('wrong', status === 'timeout' ? "Time's up" : 'Not quite',
-      'Streak reset' + (currentLongestStreak > 0 ? ` · your best is still ${currentLongestStreak}` : '') +
-      (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
+    // Wrong guess or time out: only the input turns red (no feedback card)
+    setFeedback(null);
+    if (status === 'timeout' && !guessInput.value.trim()) guessInput.placeholder = "Time's up";
     setGuessState('incorrect');
     applyRewardResult(result);
     if (result.earned_free_player) delay = 1500;
@@ -2411,6 +2412,42 @@ function streakEmoji(streak) {
   if (streak >= 3) return '⚽';
   return '';
 }
+
+// Keyboard anywhere on the page: Enter = guess / next player, letters go straight into the box
+function isTypingElsewhere(el) {
+  if (!el || el === guessInput) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+document.addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target === guessInput) return; // the input handles its own keys
+  if (isTypingElsewhere(e.target)) return;
+  if (profileModalOverlay.classList.contains('open') || miniProfileOverlay.classList.contains('open') ||
+      profileDeleteConfirm.classList.contains('open')) return;
+  if (gameArea.style.display === 'none') return;
+
+  if (e.key === 'Enter') {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return; // let focused buttons/links work
+    e.preventDefault();
+    guessForm.requestSubmit();
+    return;
+  }
+
+  const printable = e.key.length === 1;
+  if (!printable && e.key !== 'Backspace') return;
+  if (e.key === ' ' && (e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL')) return;
+
+  // A result is showing: jump to the next player first
+  if (locked && resultTimer) { clearTimeout(resultTimer); resultTimer = null; startRound(); }
+  if (locked || guessInput.disabled) return;
+
+  e.preventDefault();
+  guessInput.focus();
+  if (printable) guessInput.value += e.key;
+  else guessInput.value = guessInput.value.slice(0, -1);
+  guessInput.dispatchEvent(new Event('input', { bubbles: true }));
+});
 
 guessForm.addEventListener('submit', async (e) => {
   e.preventDefault();
