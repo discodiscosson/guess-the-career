@@ -1847,10 +1847,13 @@ async function generateLeaderboard(leagueId, teamId) {
       p_limit: 8
     });
     if (error) throw error;
+    // Only players with at least one correct answer are shown (accounts from other
+    // disco.games titles share the same user base but have 0 here)
+    const me = data.me ? toEntry(data.me) : null;
     return {
       total: data.total || 0,
-      entries: (data.entries || []).map(toEntry),
-      me: data.me ? toEntry(data.me) : null
+      entries: (data.entries || []).map(toEntry).filter(e => e.score > 0),
+      me: me && me.score > 0 ? me : null
     };
   } catch (e) {
     console.error('Failed to load leaderboard:', e);
@@ -1876,10 +1879,10 @@ async function renderFunFact() {
 
   let html = '';
   if (data.easiest) {
-    html += `<div class="difficulty__cell"><span class="overline">Easiest player</span><span class="difficulty__name">${escapeHtml(data.easiest.display_name)}</span><span class="difficulty__meta difficulty__meta--easy">${escapeHtml(data.easiest.club_name)}</span></div>`;
+    html += `<div class="difficulty__cell"><span class="overline">Easiest player</span><span class="difficulty__name">${escapeHtml(data.easiest.display_name)}</span><span class="difficulty__meta difficulty__meta--easy" title="${escapeHtml(data.easiest.club_name)}">${typeof data.easiest.pct === 'number' ? data.easiest.pct + '% guessed' : escapeHtml(data.easiest.club_name)}</span></div>`;
   }
   if (data.hardest) {
-    html += `<div class="difficulty__cell"><span class="overline">Hardest player</span><span class="difficulty__name">${escapeHtml(data.hardest.display_name)}</span><span class="difficulty__meta difficulty__meta--hard">${escapeHtml(data.hardest.club_name)}</span></div>`;
+    html += `<div class="difficulty__cell"><span class="overline">Hardest player</span><span class="difficulty__name">${escapeHtml(data.hardest.display_name)}</span><span class="difficulty__meta difficulty__meta--hard" title="${escapeHtml(data.hardest.club_name)}">${typeof data.hardest.pct === 'number' ? data.hardest.pct + '% guessed' : escapeHtml(data.hardest.club_name)}</span></div>`;
   }
 
   if (!html) {
