@@ -1,0 +1,7 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path opacity="0.14" d="M32 62.6C40.3 62.6 47 61.4 47 60C47 58.6 40.3 57.4 32 57.4C23.7 57.4 17 58.6 17 60C17 61.4 23.7 62.6 32 62.6Z" fill="#0B3830"/>
+<path d="M37 7L15 35H30L26 57L49 27H34L37 7Z" fill="#C27C00"/>
+<path d="M37 4L15 32H30L26 54L49 24H34L37 4Z" fill="url(#bo_a)"/>
+<path d="M31 12L22 24" stroke="white" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round"/>
+<defs><linearGradient id="bo_a" x1="15" y1="4" x2="15" y2="54" gradientUnits="userSpaceOnUse"><stop stop-color="#FFEA8F"/><stop offset="1" stop-color="#F5AE00"/></linearGradient></defs>
+</svg>

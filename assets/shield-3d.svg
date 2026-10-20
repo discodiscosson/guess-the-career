@@ -1,0 +1,9 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path opacity="0.14" d="M32 62.6C40.3 62.6 47 61.4 47 60C47 58.6 40.3 57.4 32 57.4C23.7 57.4 17 58.6 17 60C17 61.4 23.7 62.6 32 62.6Z" fill="#0B3830"/>
+<path d="M32 8L52 15V30C52 43 43.5 52 32 57C20.5 52 12 43 12 30V15L32 8Z" fill="#0B3830"/>
+<path d="M32 5L52 12V27C52 40 43.5 49 32 54C20.5 49 12 40 12 27V12L32 5Z" fill="url(#sh_a)"/>
+<circle cx="32" cy="27" r="9" fill="white"/>
+<circle cx="32" cy="27" r="4.2" fill="#202122"/>
+<path d="M18 15V25" stroke="white" stroke-opacity="0.5" stroke-width="2.6" stroke-linecap="round"/>
+<defs><linearGradient id="sh_a" x1="12" y1="5" x2="12" y2="54" gradientUnits="userSpaceOnUse"><stop stop-color="#43BFA4"/><stop offset="1" stop-color="#14705E"/></linearGradient></defs>
+</svg>

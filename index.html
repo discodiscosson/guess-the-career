@@ -580,6 +580,214 @@
   .site-footer { margin-top: var(--space-32); text-align: center; font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
   .site-footer a { color: var(--color-text-secondary); }
 
+  /* =================== LAYOUT v2 (Figma screens) =================== */
+  .wrap { max-width: 1280px; }
+  .layout { gap: var(--space-20); }
+  .card { background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: 14px; box-shadow: var(--elevation-1); }
+  .main { gap: var(--space-16); }
+  .main > #gameArea > * + * { margin-top: var(--space-16); }
+  .card-head { display: flex; align-items: center; gap: var(--space-12); }
+  .card-head__icon { width: 32px; height: 32px; flex-shrink: 0; }
+  .card-head__stack { display: flex; flex-direction: column; min-width: 0; }
+  .card-head__title { margin: 0; flex: 1; font-size: 16px; line-height: 22px; font-weight: 600; }
+  .card-sub { margin: var(--space-8) 0 0; font-size: 13px; line-height: 18px; color: var(--color-text-tertiary); }
+  .link-btn { margin-left: auto; padding: 4px 0; background: none; border: none; cursor: pointer; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--color-text-brand); }
+  .link-btn:hover { text-decoration: underline; }
+  .meter { height: 4px; background: var(--color-timer-track); border-radius: var(--radius-full); overflow: hidden; }
+  .meter > div { height: 100%; background: var(--color-bg-brand); border-radius: var(--radius-full); }
+  .meter--thick { height: 6px; }
+
+  /* Left card */
+  .sidebar.card { padding: var(--space-20); gap: 0; }
+  .easy-box { display: flex; align-items: center; gap: var(--space-12); margin: var(--space-16) 0 var(--space-12); padding: var(--space-12); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-bg-subtle); cursor: pointer; }
+  .easy-box__icon { width: 24px; height: 24px; flex-shrink: 0; }
+  .easy-box__text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .easy-box__text strong { font-size: 13px; line-height: 18px; font-weight: 600; }
+  .easy-box__text span { font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
+  .league-list { gap: var(--space-4); }
+  .league-head { padding: 10px 8px; }
+  .league-item.is-expanded { background: var(--color-bg-subtle); }
+  .league-meter { height: 3px; }
+  .league-item .league-meter div { background: var(--color-bg-brand); }
+  .club-box { padding: 6px 8px 6px var(--space-32); }
+  .club-more { margin: 2px 0 var(--space-8) var(--space-32); padding: 0; background: none; border: none; cursor: pointer; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--color-text-link); text-align: left; }
+  .club-more:hover { text-decoration: underline; }
+  .filter-hint { padding: 0 8px; }
+  .filter-hint:empty { display: none; }
+  .reset-btn { margin-left: auto; align-self: auto; }
+  .overall { margin-top: var(--space-16); padding-top: var(--space-16); border-top: 1px solid var(--color-border-subtle); display: flex; flex-direction: column; gap: var(--space-8); }
+  .overall__row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+  .overall__row strong { color: var(--color-text-primary); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Streak card */
+  .streak-card { display: flex; align-items: center; gap: var(--space-20); padding: var(--space-16) var(--space-20); }
+  .streak-card__now { display: flex; align-items: center; gap: var(--space-12); padding-right: var(--space-20); border-right: 1px solid var(--color-border-subtle); }
+  .streak-card__tile, .reward-card__tile { width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; }
+  .streak-card__tile { background: var(--color-bg-streak); }
+  .reward-card__tile { background: var(--color-bg-brand-subtle); }
+  .streak-card__tile img, .reward-card__tile img { width: 28px; height: 28px; }
+  .streak-card__value { display: flex; align-items: baseline; gap: var(--space-8); }
+  .streak-card__value strong { font-family: var(--font-display); font-size: 28px; line-height: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .streak-card__value span { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+  .streak-card__badges { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .streak-card__hint { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-streak); }
+  .streak-card__best { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .streak-card__best-value { display: flex; align-items: center; gap: 6px; }
+  .streak-card__best-value img { width: 20px; height: 20px; }
+  .streak-card__best-value strong { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .streak-badges { gap: 6px; flex-wrap: nowrap; }
+  .streak-badge { padding: 2px 10px 2px 4px; font-size: 12px; }
+  .streak-badge img { width: 20px; height: 20px; }
+
+  /* Infobox tweaks */
+  .infobox { border-radius: 14px; }
+  .infobox__title { padding: var(--space-24) var(--space-20) var(--space-16); gap: 6px; min-height: 64px; }
+  .infobox__name { font-size: 32px; line-height: 40px; }
+
+  /* Play card */
+  .play-card { padding: var(--space-20); }
+  .play-card .timer { margin-bottom: var(--space-16); }
+  .guess-form { margin-top: 0; gap: var(--space-12); align-items: stretch; }
+  .btn--tall { height: 52px; padding: 0 var(--space-20); font-size: 15px; }
+  .play-hint { margin: var(--space-12) 0 0; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--color-text-tertiary); }
+  .play-card.has-feedback .play-hint { display: none; }
+  .play-card .feedback { margin-top: var(--space-12); }
+  .feedback-slot { display: none; }
+
+  /* Reward card */
+  .reward-card { display: flex; align-items: center; gap: var(--space-16); padding: var(--space-16) var(--space-20); }
+  .reward-card__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .reward-card__main strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+  .reward-card__days { display: flex; align-items: center; gap: var(--space-12); }
+  .reward-card__days .daily-rewards__days span { width: 18px; }
+  .reward-row { font-size: 13px; color: var(--color-text-secondary); }
+  .reward-card__tickets { display: flex; align-items: center; gap: var(--space-8); }
+  .reward-card__tickets img { width: 30px; height: 30px; }
+  .reward-card__tickets div { display: flex; flex-direction: column; }
+  .reward-card__tickets strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+  .reward-card__tickets span { font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
+  .free-player-btn, .free-player-btn.visible { display: inline-flex; margin-left: 0; }
+
+  /* Right column */
+  .leaderboard-panel { gap: var(--space-16); }
+  .lb-card { padding: var(--space-20) var(--space-16) var(--space-16); display: flex; flex-direction: column; gap: var(--space-12); }
+  .lb-card .card-head { padding: 0 var(--space-4); }
+  .lb-filters { display: flex; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); flex-wrap: wrap; }
+  .lb-filters .lb-select {
+    height: auto; padding: 0 16px 0 0; border: none; background-color: transparent; border-radius: var(--radius-xs);
+    background-position: right 0 center; background-size: 14px 14px;
+    font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); max-width: 140px; text-overflow: ellipsis; field-sizing: content;
+  }
+  .lb-filters .lb-select:hover:not(:disabled) { color: var(--color-text-primary); }
+  .lb-filters .lb-select:disabled { background-image: none; background-color: transparent; padding-right: 0; color: var(--color-text-tertiary); cursor: default; }
+  .lb-filters .lb-select:focus-visible { box-shadow: var(--focus-ring); }
+  .lb-list { gap: 2px; }
+  .lb-row { padding: 8px var(--space-8); }
+  .lb-total { padding: 0 var(--space-8); font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
+  .lb-head { display: none; }
+  .cta-card { display: none; padding: var(--space-20); border: none; color: var(--color-text-inverse); background: linear-gradient(135deg, #187363 0%, #0B3830 100%); }
+  .cta-card.visible { display: block; }
+  .cta-card__top { display: flex; gap: var(--space-12); align-items: flex-start; margin-bottom: var(--space-16); }
+  .cta-card__top img { width: 44px; height: 44px; flex-shrink: 0; }
+  .cta-card__top div { display: flex; flex-direction: column; gap: 2px; }
+  .cta-card__top strong { font-size: 16px; line-height: 22px; font-weight: 600; }
+  .cta-card__top span { font-size: 13px; line-height: 18px; color: rgba(255,255,255,0.8); }
+  .cta-card__btn { width: 100%; background: var(--color-bg-surface); color: var(--color-text-primary); border-color: var(--color-bg-surface); }
+  .cta-card__btn:hover { background: var(--color-bg-subtle); }
+  .fun-fact { border-radius: 14px; background: var(--color-bg-surface); box-shadow: var(--elevation-1); }
+
+  /* Profile modal v2 */
+  .profile-modal { max-width: 460px; }
+  .profile-header { position: relative; align-items: center; padding: var(--space-24); border-bottom: none; background: linear-gradient(180deg, var(--color-bg-infobox-header) 0%, var(--color-bg-surface) 100%); }
+  .profile-header__text { flex: 1; min-width: 0; }
+  .profile-name { font-size: 28px; line-height: 36px; }
+  .profile-email { font-size: 13px; color: var(--color-text-secondary); }
+  .avatar--ring { width: 64px; height: 64px; background: var(--color-bg-surface); border: 2px solid var(--color-border-success); color: var(--color-text-brand); font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+  .modal-close--boxed { position: static; align-self: flex-start; background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); box-shadow: var(--elevation-1); }
+  .profile-section { border-bottom: 1px solid var(--color-border-subtle); }
+  .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-8); border: none; background: none; }
+  .profile-stat { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-bg-subtle); padding: var(--space-12); gap: 2px; }
+  .profile-stat + .profile-stat { border-left: 1px solid var(--color-border-subtle); }
+  .profile-stat img { width: 28px; height: 28px; margin-bottom: 4px; }
+  .profile-stat strong { font-size: 28px; line-height: 34px; }
+  .profile-stat span { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+  .profile-stat small { font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
+  .collection { margin-top: var(--space-16); display: flex; flex-direction: column; gap: var(--space-8); }
+  .collection__row { display: flex; justify-content: space-between; font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+  .collection__row strong { color: var(--color-text-brand); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .field-hint { font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); }
+  .profile-footer { gap: var(--space-12); }
+  .profile-signout-btn { width: auto; align-self: flex-start; }
+  .danger-box { display: flex; align-items: center; gap: var(--space-16); padding: var(--space-12) var(--space-16); border: 1px solid var(--color-border-danger); border-radius: var(--radius-md); background: var(--color-bg-danger); }
+  .danger-box div { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .danger-box strong { font-size: 14px; line-height: 20px; color: var(--color-text-danger); font-weight: 600; }
+  .danger-box span { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+  .btn--danger-outline { background: var(--color-bg-surface); border-color: var(--color-border-danger); color: var(--color-text-danger); }
+  .btn--danger-outline:hover { background: var(--color-bg-danger); }
+  .profile-delete-link { display: none; }
+
+  /* Delete dialog (re-uses #profileDeleteConfirm .open) */
+  .delete-dialog { z-index: 1100; margin: 0; padding: var(--space-20); border: none; border-radius: 0; background: rgba(32,33,34,0.5); display: none; }
+  .delete-dialog.open { display: flex; }
+  .delete-modal { max-width: 440px; padding: var(--space-24); display: flex; flex-direction: column; }
+  .delete-modal > img { width: 44px; height: 44px; margin-bottom: var(--space-12); }
+  .delete-modal h2 { margin: 0 0 var(--space-8); font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 600; }
+  .delete-modal p { margin: 0 0 var(--space-16); font-size: 14px; line-height: 20px; color: var(--color-text-secondary); }
+  .delete-modal label { font-size: 13px; line-height: 18px; font-weight: 600; margin-bottom: 6px; }
+  .delete-modal .text-input:focus { border-color: var(--color-border-danger); box-shadow: 0 0 0 3px rgba(201,60,60,0.2); }
+  .delete-modal .profile-delete-actions { justify-content: flex-end; }
+  .delete-modal .profile-delete-actions .btn { flex: 0 0 auto; }
+
+  /* Mini profile v2 */
+  .mini-profile { max-width: 340px; padding: var(--space-16); }
+  .mini-profile-header { padding-right: 0; margin-bottom: var(--space-12); align-items: flex-start; }
+  .mini-profile-id { flex: 1; min-width: 0; }
+  .mini-profile-name { font-family: var(--font-ui); font-size: 15px; line-height: 20px; }
+  .mini-profile-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: var(--color-text-secondary); margin-top: 2px; }
+  .mini-profile-medal { width: 32px; height: 32px; }
+  .mini-profile-close { top: var(--space-8); right: var(--space-8); width: 28px; height: 28px; padding: 4px; }
+  .mini-profile-header { padding-right: 32px; }
+  .profile-league-list[hidden] { display: none; }
+  .delete-modal > * { flex-shrink: 0; }
+  .delete-modal .text-input { width: 100%; height: 40px; }
+  .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
+  .mini-stat { display: flex; align-items: center; gap: var(--space-8); padding: 10px; border-radius: var(--radius-md); background: var(--color-bg-subtle); min-width: 0; }
+  .mini-stat img { width: 24px; height: 24px; flex-shrink: 0; }
+  .mini-stat div { display: flex; flex-direction: column; min-width: 0; }
+  .mini-stat span { font-size: 12px; line-height: 16px; color: var(--color-text-tertiary); white-space: nowrap; }
+  .mini-stat strong { font-size: 14px; line-height: 18px; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Desktop widths */
+  @media (min-width: 1100px) {
+    .sidebar { width: 300px; }
+    .leaderboard-panel { width: 290px; }
+    .main { max-width: 600px; }
+    .sidebar-toggle { display: none !important; }
+  }
+  /* Tablet / mobile */
+  @media (max-width: 1099px) {
+    .main { order: -1; max-width: 640px; }
+    .sidebar, .leaderboard-panel { max-width: 640px; width: 100%; margin: 0 auto; }
+    .sidebar.is-collapsed .league-filter-wrap { display: none; }
+    .sidebar-toggle { margin-bottom: var(--space-8); }
+  }
+  @media (max-width: 640px) {
+    .streak-card { flex-wrap: wrap; gap: var(--space-12); padding: var(--space-16); }
+    .streak-card__now { border-right: none; padding-right: 0; flex: 1; }
+    .streak-card__badges { order: 3; flex-basis: 100%; }
+    .streak-badges { flex-wrap: wrap; }
+    .reward-card { flex-wrap: wrap; padding: var(--space-16); }
+    .reward-card__main { flex-basis: calc(100% - 60px); }
+    .free-player-btn { margin-left: auto; }
+    .play-card { padding: var(--space-16); }
+    .btn--tall { padding: 0 var(--space-12); }
+    .profile-stats { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .profile-stat strong { font-size: 22px; line-height: 28px; }
+    .danger-box { flex-direction: column; align-items: flex-start; }
+    .delete-dialog { align-items: flex-end; padding: 0; }
+    .delete-modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-width: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -603,104 +811,152 @@
 <div class="wrap">
 <div class="layout">
 
-  <aside class="sidebar is-collapsed" id="sidebar">
-    <button type="button" class="btn btn--secondary btn--sm sidebar-toggle" id="sidebarToggle" aria-expanded="false" aria-controls="leagueFilterWrap"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M18.3333 2.5H1.66667L8.33334 10.3833V15.8333L11.6667 17.5V10.3833L18.3333 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="sidebarToggleLabel">Filter leagues</span></button>
-    <div class="sidebar-title overline">Let's focus on players from…</div>
+  <!-- ===== LEFT: leagues ===== -->
+  <aside class="sidebar card is-collapsed" id="sidebar">
+    <div class="card-head">
+      <img class="card-head__icon" src="/assets/shield-3d.svg" width="32" height="32" alt="">
+      <h2 class="card-head__title">Leagues</h2>
+      <button type="button" class="link-btn reset-btn" id="resetFilterBtn">Reset</button>
+    </div>
+    <p class="card-sub">Let's focus on players from…</p>
+
+    <label class="easy-box">
+      <img class="easy-box__icon" src="/assets/bolt-3d.svg" width="24" height="24" alt="">
+      <span class="easy-box__text"><strong>Easy Mode</strong><span>Only well-known players</span></span>
+      <span class="easy-mode-toggle">
+        <input type="checkbox" id="easyModeToggle" aria-label="Easy Mode" />
+        <span class="easy-mode-slider"></span>
+      </span>
+    </label>
+
+    <button type="button" class="btn btn--secondary btn--sm sidebar-toggle" id="sidebarToggle" aria-expanded="false" aria-controls="leagueFilterWrap"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M18.3333 2.5H1.66667L8.33334 10.3833V15.8333L11.6667 17.5V10.3833L18.3333 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="sidebarToggleLabel">Show leagues</span></button>
+
     <div class="league-filter-wrap" id="leagueFilterWrap">
       <div class="league-list" id="leagueList"></div>
-      <div class="filter-hint">Pick at least 5 clubs to filter the game.</div>
-      <button type="button" class="btn btn--secondary btn--sm reset-btn" id="resetFilterBtn">Reset (show all)</button>
+      <div class="filter-hint" id="filterHint"></div>
       <div class="league-filter-overlay" id="leagueFilterOverlay">
         <span>Filtering not possible in Easy Mode</span>
       </div>
     </div>
+
+    <div class="overall">
+      <div class="overall__row"><span>Overall progress</span><strong id="overallProgress">0 / 0</strong></div>
+      <div class="meter meter--thick" aria-hidden="true"><div id="overallMeter" style="width:0%"></div></div>
+    </div>
   </aside>
 
+  <!-- ===== MIDDLE: game ===== -->
   <main class="main">
 
-  <div id="loadingBanner" class="loading-banner">Loading players…</div>
-
-  <div id="gameArea" style="display:none;">
-    <div class="timer" id="timerRow">
-      <img class="timer__icon" src="/assets/stopwatch-3d.svg" width="20" height="20" alt="">
-      <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
-      <span class="timer__secs" id="timerSecs" aria-label="Seconds left">20s</span>
-    </div>
-
-    <article class="infobox" id="infobox">
-      <div class="infobox__title">
-        <span class="infobox__eyebrow">Mystery player</span>
-        <p class="infobox__name" id="infoboxName"></p>
-      </div>
-      <div class="infobox__section">Senior career*</div>
-      <table class="career-table">
-        <thead><tr><th>Years</th><th>Team</th><th>Apps (Gls)</th></tr></thead>
-        <tbody id="rows"></tbody>
-        <tfoot><tr><td>Total</td><td></td><td id="careerTotal"></td></tr></tfoot>
-      </table>
-      <p class="infobox__footnote">*Senior club appearances and goals counted for the domestic league only.</p>
-    </article>
-
-    <form id="guessForm" class="guess-form" autocomplete="off">
-      <div class="guess-wrap">
-        <div class="guess-field" id="guessField">
-          <svg class="guess-field__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M9.16667 15C12.3883 15 15 12.3883 15 9.16666C15 5.945 12.3883 3.33333 9.16667 3.33333C5.94501 3.33333 3.33334 5.945 3.33334 9.16666C3.33334 12.3883 5.94501 15 9.16667 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.6667 16.6667L13.75 13.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input type="text" id="guessInput" placeholder="Type a player's name…" autocomplete="off" aria-label="Who is this player?" />
-          <span class="kbd" aria-hidden="true">Enter ↵</span>
-          <img class="guess-field__state guess-field__state--correct" src="/assets/check-3d.svg" width="30" height="30" alt="Correct">
-          <img class="guess-field__state guess-field__state--incorrect" src="/assets/cross-3d.svg" width="30" height="30" alt="Incorrect">
+    <section class="card streak-card">
+      <div class="streak-card__now">
+        <span class="streak-card__tile"><img src="/assets/flame-3d.svg" width="28" height="28" alt=""></span>
+        <div>
+          <span class="overline">Current streak</span>
+          <div class="streak-card__value"><strong id="streak">0</strong><span>in a row</span></div>
         </div>
-        <div class="autocomplete-list" id="autocompleteList"></div>
       </div>
-      <button type="submit" class="btn btn--primary">Next <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 4.16667L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </form>
-
-    <div class="feedback-slot"><div class="feedback" id="feedback" role="status" aria-live="polite"></div></div>
-
-    <div class="daily-rewards" title="Play at least one guess on 5 days in a row to earn a free player (max 3)">
-      <img class="daily-rewards__icon" src="/assets/gift-3d.svg" width="26" height="26" alt="">
-      <div class="daily-rewards__days" id="rewardDays" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-      <span class="reward-row" id="rewardRow"></span>
-      <button type="button" class="btn btn--secondary btn--sm free-player-btn" id="freePlayerBtn" title="Reveal this player and count it as completed">Use free player <svg viewBox="0 0 22 20" fill="none" aria-hidden="true"><path d="M3.5 7.50001C2.83696 7.50001 2.20107 7.7634 1.73223 8.23224C1.26339 8.70108 1 9.33696 1 10C1 10.663 1.26339 11.2989 1.73223 11.7678C2.20107 12.2366 2.83696 12.5 3.5 12.5V14.1667C3.5 14.6087 3.67559 15.0326 3.98816 15.3452C4.30072 15.6577 4.72464 15.8333 5.16667 15.8333H16.8333C17.2754 15.8333 17.6993 15.6577 18.0118 15.3452C18.3244 15.0326 18.5 14.6087 18.5 14.1667V12.5C19.163 12.5 19.7989 12.2366 20.2678 11.7678C20.7366 11.2989 21 10.663 21 10C21 9.33696 20.7366 8.70108 20.2678 8.23224C19.7989 7.7634 19.163 7.50001 18.5 7.50001V5.83334C18.5 5.39131 18.3244 4.96739 18.0118 4.65483C17.6993 4.34227 17.2754 4.16667 16.8333 4.16667H5.16667C4.72464 4.16667 4.30072 4.34227 3.98816 4.65483C3.67559 4.96739 3.5 5.39131 3.5 5.83334V7.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.6667 4.16667V5.83334M12.6667 9.16667V10.8333M12.6667 14.1667V15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </div>
-
-    <div class="easy-mode-row">
-      <label class="easy-mode-toggle">
-        <input type="checkbox" id="easyModeToggle" aria-label="Easy Mode" />
-        <span class="easy-mode-slider"></span>
-      </label>
-      <span class="easy-mode-label">Easy Mode</span>
-    </div>
-    <div class="turnstile-box" id="turnstileBox"></div>
-  </div>
-
-  <div class="done-banner" id="doneBanner" style="display:none;">
-    <h2>All done! 🎉</h2>
-    <p>You've identified every player in the current selection.</p>
-  </div>
-
-  </main>
-
-  <aside class="leaderboard-panel">
-    <section class="streak-panel">
-      <div class="streak-counter">
-        <span class="overline">Current streak</span>
-        <div class="streak-counter__value"><img id="streakIcon" src="/assets/ball-3d.svg" width="32" height="32" alt=""><strong id="streak">0</strong></div>
+      <div class="streak-card__badges">
+        <div class="streak-badges" id="streakBadges" title="Best streak badges"></div>
+        <span class="streak-card__hint" id="streakHint"></span>
       </div>
-      <div class="streak-badges" id="streakBadges" title="Best streak badges"></div>
+      <div class="streak-card__best">
+        <span class="overline">Personal best</span>
+        <div class="streak-card__best-value"><img src="/assets/trophy-3d.svg" width="20" height="20" alt=""><strong id="personalBest">0</strong></div>
+      </div>
     </section>
 
-    <div class="fun-fact" id="funFact"></div>
+    <div id="loadingBanner" class="card loading-banner">Loading players…</div>
 
-    <section class="lb-section">
-      <div class="lb-head"><h2 class="lb-title">Leaderboard</h2><span class="lb-total" id="lbTotal"></span></div>
-      <div class="lb-controls">
-        <select id="lbLeagueSelect" class="lb-select" aria-label="League"></select>
-        <select id="lbTeamSelect" class="lb-select" aria-label="Team"></select>
+    <div id="gameArea" style="display:none;">
+      <article class="infobox" id="infobox">
+        <div class="infobox__title">
+          <span class="infobox__eyebrow" id="infoboxEyebrow">Mystery player</span>
+          <p class="infobox__name" id="infoboxName"></p>
+        </div>
+        <div class="infobox__section">Senior career*</div>
+        <table class="career-table">
+          <thead><tr><th>Years</th><th>Team</th><th>Apps (Gls)</th></tr></thead>
+          <tbody id="rows"></tbody>
+          <tfoot><tr><td>Total</td><td></td><td id="careerTotal"></td></tr></tfoot>
+        </table>
+        <p class="infobox__footnote">*Senior club appearances and goals counted for the domestic league only.</p>
+      </article>
+
+      <section class="card play-card">
+        <div class="timer" id="timerRow">
+          <img class="timer__icon" src="/assets/stopwatch-3d.svg" width="20" height="20" alt="">
+          <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
+          <span class="timer__secs" id="timerSecs" aria-label="Seconds left">20s</span>
+        </div>
+
+        <form id="guessForm" class="guess-form" autocomplete="off">
+          <div class="guess-wrap">
+            <div class="guess-field" id="guessField">
+              <svg class="guess-field__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M9.16667 15C12.3883 15 15 12.3883 15 9.16666C15 5.945 12.3883 3.33333 9.16667 3.33333C5.94501 3.33333 3.33334 5.945 3.33334 9.16666C3.33334 12.3883 5.94501 15 9.16667 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.6667 16.6667L13.75 13.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <input type="text" id="guessInput" placeholder="Type a player's name…" autocomplete="off" aria-label="Who is this player?" />
+              <span class="kbd" aria-hidden="true">Enter ↵</span>
+              <img class="guess-field__state guess-field__state--correct" src="/assets/check-3d.svg" width="30" height="30" alt="Correct">
+              <img class="guess-field__state guess-field__state--incorrect" src="/assets/cross-3d.svg" width="30" height="30" alt="Incorrect">
+            </div>
+            <div class="autocomplete-list" id="autocompleteList"></div>
+          </div>
+          <button type="submit" class="btn btn--primary btn--tall" id="nextBtn"><span id="nextBtnLabel">Next</span> <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 4.16667L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </form>
+
+        <p class="play-hint" id="playHint">Guess before the bar runs out · press Enter to submit</p>
+        <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+        <div class="turnstile-box" id="turnstileBox"></div>
+      </section>
+
+      <section class="card reward-card" title="Play at least one guess on 5 days in a row to earn a free player (max 3)">
+        <span class="reward-card__tile"><img src="/assets/gift-3d.svg" width="28" height="28" alt=""></span>
+        <div class="reward-card__main">
+          <strong>Daily reward</strong>
+          <div class="reward-card__days"><div class="daily-rewards__days" id="rewardDays" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div><span class="reward-row" id="rewardRow"></span></div>
+        </div>
+        <div class="reward-card__tickets">
+          <img src="/assets/ticket-3d.svg" width="28" height="28" alt="">
+          <div><strong id="freePlayersCount">×0</strong><span>free players</span></div>
+        </div>
+        <button type="button" class="btn btn--secondary free-player-btn" id="freePlayerBtn" title="Reveal this player and count it as completed">Use free player</button>
+      </section>
+    </div>
+
+    <div class="done-banner" id="doneBanner" style="display:none;">
+      <h2>All done! 🎉</h2>
+      <p>You've identified every player in the current selection.</p>
+    </div>
+  </main>
+
+  <!-- ===== RIGHT: leaderboard ===== -->
+  <aside class="leaderboard-panel">
+    <section class="card lb-card">
+      <div class="card-head">
+        <img class="card-head__icon" src="/assets/trophy-3d.svg" width="32" height="32" alt="">
+        <div class="card-head__stack">
+          <h2 class="card-head__title">Leaderboard</h2>
+          <div class="lb-filters">
+            <select id="lbLeagueSelect" class="lb-select" aria-label="League"></select>
+            <span aria-hidden="true">·</span>
+            <select id="lbTeamSelect" class="lb-select" aria-label="Team"></select>
+          </div>
+        </div>
       </div>
       <div class="lb-list" id="lbList"></div>
       <div id="lbYou"></div>
+      <div class="lb-total" id="lbTotal"></div>
     </section>
+
+    <section class="card cta-card" id="ctaCard">
+      <div class="cta-card__top">
+        <img src="/assets/crown-3d.svg" width="44" height="44" alt="">
+        <div><strong>Get on the board</strong><span>Sign in to save your streak and climb the ranks.</span></div>
+      </div>
+      <button type="button" class="btn btn-google cta-card__btn" id="ctaSignInBtn"><img src="/assets/google.svg" width="16" height="16" alt="">Sign in with Google</button>
+    </section>
+
+    <div class="fun-fact" id="funFact"></div>
   </aside>
 
 </div>
@@ -709,25 +965,28 @@
 
 <!-- ---- PROFILE MODAL ---- -->
 <div class="modal-overlay" id="profileModalOverlay">
-  <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileName">
-    <button type="button" class="modal-close" id="profileModalClose" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-
+  <div class="modal profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileName">
     <div class="profile-header">
-      <div class="avatar avatar--l" id="profileAvatar">?</div>
-      <div>
+      <div class="avatar avatar--ring" id="profileAvatar">?</div>
+      <div class="profile-header__text">
         <div class="profile-name" id="profileName">—</div>
         <div class="profile-email" id="profileEmail">—</div>
       </div>
+      <button type="button" class="modal-close modal-close--boxed" id="profileModalClose" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
 
     <div class="profile-section">
       <div class="profile-section-title overline">Statistics</div>
       <div class="profile-stats">
-        <div class="profile-stat"><span class="overline">Found</span><strong id="profileTotalProgress">0 / 0</strong></div>
-        <div class="profile-stat"><span class="overline">Best streak</span><strong id="profileLongestStreak">0</strong></div>
-        <div class="profile-stat"><span class="overline">Rank</span><strong id="profileRank">—</strong></div>
+        <div class="profile-stat"><img src="/assets/ball-3d.svg" width="28" height="28" alt=""><strong id="profileTotalProgress">0</strong><span>Total progress</span><small id="profileTotalOf">of 0 players</small></div>
+        <div class="profile-stat"><img src="/assets/flame-3d.svg" width="28" height="28" alt=""><strong id="profileLongestStreak">0</strong><span>Longest streak</span><small>in a row</small></div>
+        <div class="profile-stat"><img src="/assets/trophy-3d.svg" width="28" height="28" alt=""><strong id="profileRank">—</strong><span>Leaderboard rank</span><small>worldwide</small></div>
       </div>
-      <div class="profile-league-list" id="profileLeagueList"></div>
+      <div class="collection">
+        <div class="collection__row"><span>Collection</span><strong id="profileCollection">0%</strong></div>
+        <div class="meter meter--thick" aria-hidden="true"><div id="profileCollectionMeter" style="width:0%"></div></div>
+      </div>
+      <div class="profile-league-list" id="profileLeagueList" hidden></div>
     </div>
 
     <div class="profile-section">
@@ -738,34 +997,48 @@
           <input type="text" class="text-input" id="profileUsernameInput" placeholder="Your name" maxlength="40" />
           <button type="button" class="btn btn--primary" id="profileSaveNameBtn">Save</button>
         </div>
+        <div class="field-hint">Up to 40 characters. Visible to everyone.</div>
         <div class="profile-save-msg" id="profileSaveMsg"></div>
       </div>
     </div>
 
     <div class="profile-footer">
-      <button type="button" class="btn btn--secondary profile-signout-btn" id="profileSignOutBtn"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V4.16667C2.5 3.72464 2.67559 3.30072 2.98816 2.98816C3.30072 2.67559 3.72464 2.5 4.16667 2.5H7.5M13.3333 14.1667L17.5 10M17.5 10L13.3333 5.83333M17.5 10H7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign out</button>
-      <button type="button" class="profile-delete-link" id="profileDeleteBtn">Delete account</button>
-      <div class="profile-delete-confirm" id="profileDeleteConfirm">
-        <p>This permanently deletes your account, your progress and your leaderboard entry. It cannot be undone.</p>
-        <label for="profileDeleteInput">Type DELETE to confirm</label>
-        <input type="text" class="text-input" id="profileDeleteInput" autocomplete="off" />
-        <div class="profile-delete-actions">
-          <button type="button" class="btn btn--secondary profile-delete-cancel" id="profileDeleteCancel">Cancel</button>
-          <button type="button" class="btn btn--danger profile-delete-confirm-btn" id="profileDeleteConfirmBtn" disabled>Delete my account</button>
-        </div>
-        <div class="profile-save-msg" id="profileDeleteMsg" style="color: var(--color-text-danger);"></div>
+      <button type="button" class="btn btn--ghost profile-signout-btn" id="profileSignOutBtn">Sign out <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V4.16667C2.5 3.72464 2.67559 3.30072 2.98816 2.98816C3.30072 2.67559 3.72464 2.5 4.16667 2.5H7.5M13.3333 14.1667L17.5 10M17.5 10L13.3333 5.83333M17.5 10H7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="danger-box">
+        <div><strong>Delete account</strong><span>Permanently deletes your account, progress and leaderboard entry.</span></div>
+        <button type="button" class="btn btn--danger-outline btn--sm" id="profileDeleteBtn">Delete…</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ---- MINI PROFILE POPUP (leaderboard) ---- -->
+<!-- ---- DELETE ACCOUNT DIALOG ---- -->
+<div class="modal-overlay delete-dialog profile-delete-confirm" id="profileDeleteConfirm">
+  <div class="modal delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <img src="/assets/cross-3d.svg" width="44" height="44" alt="">
+    <h2 id="deleteTitle">Delete your account?</h2>
+    <p>This permanently deletes your account, your progress and your leaderboard entry. It cannot be undone.</p>
+    <label for="profileDeleteInput">Type DELETE to confirm</label>
+    <input type="text" class="text-input" id="profileDeleteInput" autocomplete="off" />
+    <div class="profile-delete-actions">
+      <button type="button" class="btn btn--secondary" id="profileDeleteCancel">Cancel</button>
+      <button type="button" class="btn btn--danger" id="profileDeleteConfirmBtn" disabled>Delete my account</button>
+    </div>
+    <div class="profile-save-msg" id="profileDeleteMsg" style="color: var(--color-text-danger);"></div>
+  </div>
+</div>
+
+<!-- ---- MINI PROFILE (leaderboard) ---- -->
 <div class="mini-profile-overlay" id="miniProfileOverlay">
   <div class="mini-profile" id="miniProfile" role="dialog" aria-modal="true" aria-labelledby="miniProfileName">
     <button type="button" class="modal-close mini-profile-close" id="miniProfileClose" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="mini-profile-header">
       <div class="avatar avatar--m" id="miniProfileAvatar">?</div>
-      <div class="mini-profile-name" id="miniProfileName">—</div>
+      <div class="mini-profile-id">
+        <div class="mini-profile-name" id="miniProfileName">—</div>
+        <div class="mini-profile-meta" id="miniProfileMeta"></div>
+      </div>
+      <img class="mini-profile-medal" id="miniProfileMedal" src="" width="32" height="32" alt="" hidden>
     </div>
     <div class="mini-profile-leagues" id="miniProfileLeagues"></div>
   </div>
@@ -789,10 +1062,10 @@ const LEAGUES = [
 
 // Streak badge tiers (design: Streak). Earned = best streak reached the tier.
 const STREAK_TIERS = [
-  { n: 3, icon: '/assets/ball-3d.svg' },
-  { n: 5, icon: '/assets/flame-3d.svg' },
-  { n: 7, icon: '/assets/star-3d.svg' },
-  { n: 10, icon: '/assets/crown-3d.svg' }
+  { n: 3, icon: '/assets/ball-3d.svg', name: 'ball' },
+  { n: 5, icon: '/assets/flame-3d.svg', name: 'flame' },
+  { n: 7, icon: '/assets/star-3d.svg', name: 'star' },
+  { n: 10, icon: '/assets/crown-3d.svg', name: 'crown' }
 ];
 const MEDALS = { 1: '/assets/medal-gold-3d.svg', 2: '/assets/medal-silver-3d.svg', 3: '/assets/medal-bronze-3d.svg' };
 
@@ -863,7 +1136,24 @@ const infoboxName = document.getElementById('infoboxName');
 const careerTotalEl = document.getElementById('careerTotal');
 const rewardRow = document.getElementById('rewardRow');
 const rewardDaysEl = document.getElementById('rewardDays');
-const streakIconEl = document.getElementById('streakIcon');
+const streakHintEl = document.getElementById('streakHint');
+const personalBestEl = document.getElementById('personalBest');
+const filterHintEl = document.getElementById('filterHint');
+const overallProgressEl = document.getElementById('overallProgress');
+const overallMeterEl = document.getElementById('overallMeter');
+const infoboxEyebrow = document.getElementById('infoboxEyebrow');
+const playCardEl = document.querySelector('.play-card');
+const nextBtnLabel = document.getElementById('nextBtnLabel');
+const freePlayersCountEl = document.getElementById('freePlayersCount');
+const ctaCardEl = document.getElementById('ctaCard');
+const ctaSignInBtn = document.getElementById('ctaSignInBtn');
+const profileTotalOfEl = document.getElementById('profileTotalOf');
+const profileCollectionEl = document.getElementById('profileCollection');
+const profileCollectionMeterEl = document.getElementById('profileCollectionMeter');
+const miniProfileMeta = document.getElementById('miniProfileMeta');
+const miniProfileMedal = document.getElementById('miniProfileMedal');
+let showAllClubs = new Set();   // leagues where all clubs are listed
+let resultTimer = null;         // pending auto-advance after a result
 const streakBadgesEl = document.getElementById('streakBadges');
 const lbTotalEl = document.getElementById('lbTotal');
 const sidebarEl = document.getElementById('sidebar');
@@ -951,16 +1241,21 @@ function tierFor(n) {
   return t;
 }
 
-// Current streak number + icon, and the four badges based on the best streak
+// Streak card: current streak, badges (based on personal best), hint and personal best
+function streakHintText(n) {
+  if (n < STREAK_TIERS[0].n) return `${STREAK_TIERS[0].n - n} correct in a row unlocks the first badge`;
+  const next = STREAK_TIERS.find(t => t.n > n);
+  return next ? `${next.n - n} more for the ${next.name}` : 'You have the crown 👑';
+}
+
 function renderStreak() {
   streakEl.textContent = String(streak);
-  const t = tierFor(streak);
-  streakIconEl.src = t ? t.icon : STREAK_TIERS[0].icon;
-  streakIconEl.classList.toggle('is-dim', !t);
   const best = Math.max(currentLongestStreak || 0, streak);
+  personalBestEl.textContent = String(best);
+  streakHintEl.textContent = streakHintText(streak);
   streakBadgesEl.innerHTML = STREAK_TIERS.map(tier => {
     const earned = best >= tier.n;
-    return `<span class="streak-badge${earned ? '' : ' is-locked'}" title="${earned ? 'Earned' : 'Locked'}: ${tier.n} in a row"><img src="${tier.icon}" width="22" height="22" alt="">${tier.n}</span>`;
+    return `<span class="streak-badge${earned ? '' : ' is-locked'}" title="${earned ? 'Earned' : 'Locked'}: ${tier.n} in a row"><img src="${tier.icon}" width="20" height="20" alt="">${tier.n}</span>`;
   }).join('');
 }
 
@@ -968,6 +1263,7 @@ function renderStreak() {
 const FEEDBACK_ICONS = { correct: '/assets/check-3d.svg', wrong: '/assets/cross-3d.svg' };
 
 function setFeedback(kind, title, sub) {
+  playCardEl.classList.toggle('has-feedback', !!kind);
   if (!kind) { feedbackEl.className = 'feedback'; feedbackEl.innerHTML = ''; return; }
   feedbackEl.className = 'feedback ' + kind;
   feedbackEl.innerHTML =
@@ -983,8 +1279,9 @@ function setGuessState(state) {
   else if (state === 'locked') guessField.classList.add('is-locked');
 }
 
-function revealName(name) {
+function revealName(name, eyebrow) {
   if (!name) return;
+  infoboxEyebrow.textContent = eyebrow || 'Correct — it was';
   infoboxName.textContent = name;
   infoboxEl.classList.add('is-revealed');
 }
@@ -1051,6 +1348,7 @@ function updateUserBarUI() {
       ? 'That Google account already has a profile. Sign in with it to continue (progress from this guest session is not merged).'
       : "Playing as guest — progress won't be saved";
   }
+  ctaCardEl.classList.toggle('visible', !signedIn);
   renderStreak();
 }
 
@@ -1108,6 +1406,8 @@ async function upsertProfile() {
     currentUsername = defaultName;
   }
 }
+
+ctaSignInBtn.addEventListener('click', () => authBtn.click());
 
 authBtn.addEventListener('click', async () => {
   if (currentUser && !currentUser.is_anonymous) {
@@ -1261,9 +1561,10 @@ const DAYS_PER_FREE_PLAYER = 5;
 
 function renderRewards() {
   const progress = playDays === 0 ? 0 : (playDays % DAYS_PER_FREE_PLAYER === 0 ? DAYS_PER_FREE_PLAYER : playDays % DAYS_PER_FREE_PLAYER);
-  rewardRow.textContent = `${progress}/${DAYS_PER_FREE_PLAYER} days · ${freePlayers} free player${freePlayers === 1 ? '' : 's'}`;
+  rewardRow.textContent = `${progress} of ${DAYS_PER_FREE_PLAYER} days`;
   Array.from(rewardDaysEl.children).forEach((dot, i) => dot.classList.toggle('is-on', i < progress));
-  freePlayerBtn.classList.toggle('visible', !!currentUser && freePlayers > 0);
+  freePlayersCountEl.textContent = `×${freePlayers}`;
+  freePlayerBtn.disabled = !currentUser || freePlayers < 1 || locked;
 }
 
 function applyRewardResult(result) {
@@ -1435,19 +1736,32 @@ function renderLeagueBoxes() {
           <div class="league-meter" aria-hidden="true"><div style="width:${pct}%"></div></div>
         </div>
         <div class="league-clubs${expanded ? ' open' : ''}" data-clubs-for="${l.id}">
-          ${clubs.map(c => {
+          ${(showAllClubs.has(l.id) ? clubs : clubs.slice(0, 6)).map(c => {
             const cp = leaguePlayers.filter(p => p.clubId === c.id);
             const cd = cp.filter(p => completed.has(p.id)).length;
             const sel = selectedClubs.has(c.id);
             return `<div class="club-box${sel ? ' selected' : ''}" data-club="${escapeHtml(c.id)}" role="checkbox" aria-checked="${sel}">${checkboxHtml(sel ? 'checked' : '')}<span class="club-box__name">${escapeText(c.name)}</span><span class="club-box__count">${cd}/${cp.length}</span></div>`;
           }).join('')}
+          ${!showAllClubs.has(l.id) && clubs.length > 6 ? `<button type="button" class="club-more" data-show-all="${l.id}">Show all ${clubs.length} clubs</button>` : ''}
         </div>
       </div>
   `;
   }).join('');
+
+  const n = selectedClubs.size;
+  filterHintEl.textContent = n > 0 && n < 5 ? `Pick at least 5 clubs to filter the game (${n}/5).` : '';
+  const allDone = allPlayers.filter(p => completed.has(p.id)).length;
+  overallProgressEl.textContent = `${allDone.toLocaleString('en-US')} / ${allPlayers.length.toLocaleString('en-US')}`;
+  overallMeterEl.style.width = (allPlayers.length ? (allDone / allPlayers.length) * 100 : 0) + '%';
 }
 
 leagueListEl.addEventListener('click', (e) => {
+  const more = e.target.closest('[data-show-all]');
+  if (more) {
+    showAllClubs.add(more.dataset.showAll);
+    renderLeagueBoxes();
+    return;
+  }
   const arrow = e.target.closest('[data-league-arrow]');
   if (arrow) {
     const id = arrow.dataset.leagueArrow;
@@ -1484,11 +1798,13 @@ leagueListEl.addEventListener('click', (e) => {
 
 function updateSidebarToggle() {
   const n = effectiveSelectedClubs().size;
-  sidebarToggleLabel.textContent = n ? `Filter leagues · ${n} clubs` : 'Filter leagues';
+  const open = !sidebarEl.classList.contains('is-collapsed');
+  sidebarToggleLabel.textContent = (open ? 'Hide leagues' : 'Show leagues') + (n ? ` · ${n} clubs` : '');
 }
 sidebarToggle.addEventListener('click', () => {
   const collapsed = sidebarEl.classList.toggle('is-collapsed');
   sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  updateSidebarToggle();
 });
 
 resetFilterBtn.addEventListener('click', () => {
@@ -1582,23 +1898,37 @@ async function getUserTopLeagues(userId) {
     return { league: l, name: l.name, done, total: leaguePlayers.length, pct: done / leaguePlayers.length };
   }).filter(Boolean);
   stats.sort((a, b) => b.pct - a.pct);
-  return stats.slice(0, 3);
+  return stats;
 }
 
-async function openMiniProfile(userId, username, country) {
+function countryName(code) {
+  try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(String(code).toUpperCase()); } catch (e) { return ''; }
+}
+
+async function openMiniProfile(userId, username, country, info) {
+  info = info || {};
   miniProfileAvatar.textContent = initialsOf(username);
-  miniProfileName.innerHTML = nameWithFlag(country, username || 'Player');
+  miniProfileName.textContent = username || 'Player';
+  const scope = lbLeagueSelect.value === 'worldwide' ? 'worldwide' : 'in ' + (LEAGUES.find(l => l.id === lbLeagueSelect.value)?.name || 'league');
+  const cc = country && /^[A-Za-z]{2}$/.test(country) ? country : null;
+  miniProfileMeta.innerHTML = (cc ? flagImg(cc) + `<span>${escapeHtml(countryName(cc))}</span>` : '') +
+    (info.rank ? `<span>${cc ? '· ' : ''}#${info.rank} ${escapeHtml(scope)}</span>` : '');
+  if (info.rank && MEDALS[info.rank]) { miniProfileMedal.src = MEDALS[info.rank]; miniProfileMedal.hidden = false; }
+  else miniProfileMedal.hidden = true;
   miniProfileLeagues.innerHTML = '<div class="mini-profile-empty">Loading…</div>';
   miniProfileOverlay.classList.add('open');
 
   const topLeagues = await getUserTopLeagues(userId);
-  if (topLeagues.length === 0) {
-    miniProfileLeagues.innerHTML = '<div class="mini-profile-empty">No progress yet.</div>';
-    return;
-  }
-  miniProfileLeagues.innerHTML =
-    '<span class="overline">Top leagues</span>' +
-    topLeagues.map(s => leagueProgressHtml(s.league, s.done, s.total)).join('');
+  const found = topLeagues.reduce((sum, l) => sum + l.done, 0);
+  const best = topLeagues[0];
+  const tier = tierFor(info.streak);
+  const stat = (icon, label, value) => `<div class="mini-stat"><img src="${icon}" width="24" height="24" alt=""><div><span>${label}</span><strong>${value}</strong></div></div>`;
+  miniProfileLeagues.innerHTML = `<div class="mini-stats">
+    ${stat('/assets/trophy-3d.svg', 'Score', Number(info.score || 0).toLocaleString('en-US'))}
+    ${stat(tier ? tier.icon : '/assets/flame-3d.svg', 'Longest streak', Number(info.streak || 0).toLocaleString('en-US'))}
+    ${stat('/assets/ball-3d.svg', 'Players found', found.toLocaleString('en-US'))}
+    ${stat('/assets/shield-3d.svg', 'Best league', best ? escapeHtml(best.name) : '—')}
+  </div>`;
 }
 
 function closeMiniProfile() {
@@ -1613,7 +1943,11 @@ function handleLbNameClick(e) {
   const link = e.target.closest('.lb-name-link');
   if (!link) return;
   e.preventDefault();
-  openMiniProfile(link.dataset.userId, link.dataset.username, link.dataset.country || null);
+  openMiniProfile(link.dataset.userId, link.dataset.username, link.dataset.country || null, {
+    rank: Number(link.dataset.rank) || null,
+    score: Number(link.dataset.score) || 0,
+    streak: Number(link.dataset.streak) || 0
+  });
 }
 lbListEl.addEventListener('click', handleLbNameClick);
 lbYouEl.addEventListener('click', handleLbNameClick);
@@ -1660,7 +1994,7 @@ function lbRowHtml(e, opts) {
       ${rank}
       ${flagImg(e.country)}
       <span class="lb-name">
-        <a href="#" class="lb-name-link" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}">${escapeHtml(e.name)}</a>
+        <a href="#" class="lb-name-link" data-user-id="${escapeHtml(e.userId)}" data-username="${escapeHtml(e.name)}" data-country="${escapeHtml(e.country || '')}" data-rank="${e.rank}" data-score="${e.score}" data-streak="${e.longestStreak}">${pinned ? 'You · ' : ''}${escapeHtml(e.name)}</a>
         ${badge}
       </span>
       <span class="lb-score">${Number(e.score).toLocaleString('en-US')}</span>
@@ -1672,7 +2006,7 @@ async function renderLeaderboard() {
   const teamId = lbTeamSelect.value;
   const { total, entries, me } = await generateLeaderboard(leagueId, teamId);
   const top = entries;
-  lbTotalEl.textContent = total ? `of ${Number(total).toLocaleString('en-US')} players` : '';
+  lbTotalEl.textContent = total ? `Score = players found, out of ${Number(total).toLocaleString('en-US')}` : '';
 
   lbListEl.innerHTML = top.map(e => lbRowHtml(e)).join('');
 
@@ -1718,16 +2052,19 @@ async function populateProfileModal() {
   const label = currentUsername || currentUser.user_metadata?.full_name || currentUser.email || 'Player';
   profileAvatar.textContent = initialsOf(label);
   profileName.innerHTML = nameWithFlag(currentCountryCode, label);
-  profileEmail.textContent = currentUser.email || '';
+  const since = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+  profileEmail.textContent = 'Signed in with Google' + (since ? ` · playing since ${since}` : '');
   profileUsernameInput.value = label;
   profileSaveMsg.textContent = '';
 
   // Total progress across all real players currently in the database
   const totalDone = allPlayers.filter(p => completed.has(p.id)).length;
-  profileTotalProgress.textContent = `${totalDone} / ${allPlayers.length}`;
-  const bestTier = tierFor(currentLongestStreak);
-  document.getElementById('profileLongestStreak').innerHTML =
-    (bestTier ? `<img src="${bestTier.icon}" width="20" height="20" alt="">` : '') + escapeHtml(currentLongestStreak);
+  profileTotalProgress.textContent = totalDone.toLocaleString('en-US');
+  profileTotalOfEl.textContent = `of ${allPlayers.length.toLocaleString('en-US')} players`;
+  const collectionPct = allPlayers.length ? (totalDone / allPlayers.length) * 100 : 0;
+  profileCollectionEl.textContent = collectionPct.toFixed(1) + '%';
+  profileCollectionMeterEl.style.width = collectionPct + '%';
+  document.getElementById('profileLongestStreak').textContent = String(currentLongestStreak || 0);
 
   // Per-league breakdown (leagues that actually have players)
   const activeLeagues = LEAGUES.filter(l => allPlayers.some(p => p.leagueId === l.id));
@@ -1923,9 +2260,13 @@ function startRound() {
   setGuessState(null);
   infoboxEl.classList.remove('is-revealed');
   infoboxName.textContent = '';
+  infoboxEyebrow.textContent = 'Mystery player';
+  nextBtnLabel.textContent = 'Next';
+  resultTimer = null;
   guessInput.value = '';
   guessInput.disabled = false;
   renderSuggestions([]);
+  renderRewards();
   guessInput.focus();
 
   current = pool.pop();
@@ -1971,9 +2312,10 @@ function endRound(result) {
     }
     renderStreak();
     setFeedback('correct', `Correct — ${result.display_name}`,
-      `+1 · ${streak} in a row` + (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
+      `+1 · ${streak} in a row` + (streak >= 1 && streak < 10 ? ' · ' + streakHintText(streak) : '') +
+      (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
     setGuessState('correct');
-    revealName(result.display_name);
+    revealName(result.display_name, 'Correct — it was');
     applyRewardResult(result);
     if (result.earned_free_player) delay = 1500;
     completed.add(current.id);
@@ -1986,7 +2328,7 @@ function endRound(result) {
     if (typeof result.streak === 'number') { streak = result.streak; renderStreak(); }
     setFeedback('correct', `Free player — ${result.display_name}`, `Streak kept · ${streak} in a row`);
     setGuessState('correct');
-    revealName(result.display_name);
+    revealName(result.display_name, 'Free player — it was');
     completed.add(current.id);
     updateProgressUI();
     renderLeaderboard();
@@ -2012,7 +2354,7 @@ function endRound(result) {
     streak = 0;
     renderStreak();
     setFeedback('wrong', status === 'timeout' ? "Time's up" : 'Not quite',
-      'Streak reset' + (currentLongestStreak > 0 ? ` · best ${currentLongestStreak}` : '') +
+      'Streak reset' + (currentLongestStreak > 0 ? ` · your best is still ${currentLongestStreak}` : '') +
       (result.earned_free_player ? ' · 🎟️ Free player earned!' : ''));
     setGuessState('incorrect');
     applyRewardResult(result);
@@ -2021,7 +2363,9 @@ function endRound(result) {
     pool.unshift(current);
     renderFunFact();
   }
-  setTimeout(startRound, delay);
+  nextBtnLabel.textContent = 'Next player';
+  renderRewards();
+  resultTimer = setTimeout(() => { resultTimer = null; startRound(); }, delay);
 }
 
 function skipRound() {
@@ -2063,6 +2407,7 @@ function streakEmoji(streak) {
 
 guessForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (locked && resultTimer) { clearTimeout(resultTimer); resultTimer = null; startRound(); return; }
   if (locked) return;
   const text = guessInput.value;
   if (text.trim() === '') {
